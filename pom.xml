@@ -6,7 +6,7 @@
 	<artifactId>spring-session-data-neo4j</artifactId>
 	<version>2.0.0.BUILD-SNAPSHOT</version>
 
-	<name>Spring Session Neo4j</name>
+	<name>Spring Session Neo4j OGM</name>
 	<url>https://github.com/spring-projects/spring-session-data-neo4j</url>
 	<description>
 		Persist session data in Neo4j
@@ -203,7 +203,7 @@
 								</goals>
 								<configuration>
 									<deployProperties>
-										<archives>*:*:*:*@zip zip.name:spring-session-data-neo4j, zip.displayname:Spring Session Neo4j, zip.deployed:false</archives>
+										<archives>*:*:*:*@zip zip.name:spring-session-data-neo4j, zip.displayname:Spring Session Neo4j OGM, zip.deployed:false</archives>
 									</deployProperties>
 									<publisher>
 										<contextUrl>http://repo.spring.io</contextUrl>
@@ -238,7 +238,7 @@
 								</goals>
 								<configuration>
 									<deployProperties>
-										<archives>*:*:*:*@zip zip.name:spring-session-data-neo4j, zip.displayname:Spring Session Neo4j, zip.deployed:false</archives>
+										<archives>*:*:*:*@zip zip.name:spring-session-data-neo4j, zip.displayname:Spring Session Neo4j OGM, zip.deployed:false</archives>
 									</deployProperties>
 									<publisher>
 										<contextUrl>http://repo.spring.io</contextUrl>
@@ -273,7 +273,7 @@
 								</goals>
 								<configuration>
 									<deployProperties>
-										<archives>*:*:*:*@zip zip.name:spring-session-data-neo4j, zip.displayname:Spring Session Neo4j, zip.deployed:false</archives>
+										<archives>*:*:*:*@zip zip.name:spring-session-data-neo4j, zip.displayname:Spring Session Neo4j OGM, zip.deployed:false</archives>
 									</deployProperties>
 									<publisher>
 										<contextUrl>http://repo.spring.io</contextUrl>

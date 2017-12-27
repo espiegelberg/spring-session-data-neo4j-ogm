@@ -1,9 +1,9 @@
 image:https://travis-ci.org/spring-projects/spring-session-data-neo4j.svg?branch=master["Build Status", link="https://travis-ci.org/spring-projects/spring-session-data-neo4j"]
 
-= Spring Session Neo4j
+= Spring Session Neo4j OGM
 Eric Spiegelberg
 
-Spring Session Neo4j provides a solution for Spring Session in a Neo4j data store.
+Spring Session Neo4j OGM provides a solution for Spring Session in a Neo4j data store.
 
 * Accessing a session from any environment (i.e. web, messaging infrastructure, etc)
 * In a web environment
@@ -12,7 +12,7 @@ Spring Session Neo4j provides a solution for Spring Session in a Neo4j data stor
 ** Easily keep the HttpSession alive when a WebSocket is active
 
 
-== Building Spring Session Neo4j
+== Building Spring Session Neo4j OGM
 
 . Run `mvn clean package`
 
@@ -20,7 +20,7 @@ This will generate the artifact.
 
 You can also import the project into your IDE.
 
-== Releasing Spring Session Neo4j
+== Releasing Spring Session Neo4j OGM
 
 Snapshots are published automatically via CI server by doing this:
 
@@ -52,7 +52,7 @@ By participating, you  are expected to uphold this code. Please report unaccepta
 
 = Spring Session Project Site
 
-You can find the documentation, issue management, support, samples, and guides for using Spring Session Neo4j at http://projects.spring.io/spring-session-data-neo4j/
+You can find the documentation, issue management, support, samples, and guides for using Spring Session Neo4j OGM at http://projects.spring.io/spring-session-data-neo4j/
 
 = License
 
