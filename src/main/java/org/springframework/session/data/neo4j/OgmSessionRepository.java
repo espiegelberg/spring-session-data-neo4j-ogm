@@ -207,14 +207,14 @@ public class OgmSessionRepository implements
 		this.defaultMaxInactiveInterval = defaultMaxInactiveInterval;
 	}
 
-//	/**
-//	 * Sets the {@link ConversionService} to use.
-//	 * @param conversionService the converter to set
-//	 */
-//	public void setConversionService(ConversionService conversionService) {
-//		Assert.notNull(conversionService, "conversionService must not be null");
-//		this.conversionService = conversionService;
-//	}
+	/**
+	 * Sets the {@link ConversionService} to use.
+	 * @param conversionService the converter to set
+	 */
+	public void setConversionService(ConversionService conversionService) {
+		Assert.notNull(conversionService, "conversionService must not be null");
+		this.conversionService = conversionService;
+	}
 
 	public OgmSession createSession() {
 		OgmSession session = new OgmSession();
@@ -354,7 +354,8 @@ public class OgmSessionRepository implements
 		}
 		
 		if (session != null) {
-			if (session.isExpired()) {
+			boolean expired = session.isExpired(); 
+			if (expired) {
 				delete(sessionId);
 			} else {
 				return new OgmSession(session);
