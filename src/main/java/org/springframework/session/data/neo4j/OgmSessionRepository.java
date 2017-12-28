@@ -351,19 +351,27 @@ public class OgmSessionRepository implements
 				delete(sessionId);
 			} else {
 			
-				long lastAccessedTime = (long) nodeModel.property(LAST_ACCESS_TIME);
+				
+				long lastAccessedTime = ((Number) nodeModel.property(LAST_ACCESS_TIME)).longValue();
 				session.setLastAccessedTime(Instant.ofEpochMilli(lastAccessedTime));
 				
-				long maxInactiveInterval = (long) nodeModel.property(MAX_INACTIVE_INTERVAL);
+				long maxInactiveInterval = ((Number) nodeModel.property(MAX_INACTIVE_INTERVAL)).longValue();
 				session.setMaxInactiveInterval(Duration.ofMillis(maxInactiveInterval));
 				
 				List<Property<String, Object>> propertyList = nodeModel.getPropertyList();			
 				for (Property<String, Object> property : propertyList) {
 					String attributeName = property.getKey();
 					if (attributeName.startsWith(ATTRIBUTE_KEY_PREFIX)) {
-						attributeName = attributeName.substring(10);
-						byte bytes[] = (byte[]) property.getValue();
-						Object attributeValue = deserialize(bytes);
+
+						attributeName = attributeName.substring(10); // Strip the ATTRIBUTE_KEY_PREFIX						
+						Object attributeValue = property.getValue();
+
+						boolean isNeo4jSupportedType = isNeo4jSupportedType(attributeValue);
+						if (!isNeo4jSupportedType) {
+							byte bytes[] = (byte[]) property.getValue();
+							attributeValue = deserialize(bytes);						
+						}
+						
 						session.setAttribute(attributeName, attributeValue);
 					}				
 				}
@@ -424,7 +432,7 @@ public class OgmSessionRepository implements
 			for (Property<String, Object> property : propertyList) {
 				String attributeName = property.getKey();
 				if (attributeName.startsWith(ATTRIBUTE_KEY_PREFIX)) {
-					attributeName = attributeName.substring(10);
+					attributeName = attributeName.substring(10); // Strip the ATTRIBUTE_KEY_PREFIX
 					byte bytes[] = (byte[]) property.getValue();
 					Object attributeValue = deserialize(bytes);
 					session.setAttribute(attributeName, attributeValue);

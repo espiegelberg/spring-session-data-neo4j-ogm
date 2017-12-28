@@ -18,11 +18,15 @@ package org.springframework.session.data.neo4j;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +38,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.neo4j.ogm.model.Result;
+import org.neo4j.ogm.response.model.NodeModel;
 import org.neo4j.ogm.response.model.QueryResultModel;
 import org.neo4j.ogm.response.model.QueryStatisticsModel;
 import org.neo4j.ogm.session.Session;
@@ -325,6 +330,53 @@ public class OgmSessionRepositoryTests {
 		verify(this.transaction, times(1)).commit();
 		verify(this.transaction, times(1)).close();
 	}
+	
+	@Test
+	public void getSessionFound() {
+		
+		given(this.sessionFactory.openSession()).willReturn(session);		
+		given(session.beginTransaction()).willReturn(transaction);
+		
+		List<Map<String, Object>> r = new ArrayList<>();
+		
+		String attributeName = "name";
+		String attributeValue = "Elizabeth";
+		
+		Map<String, Object> data = new HashMap<>();
+		NodeModel nodeModel = new NodeModel();
+		Map<String, Object> properties = new HashMap<>();
+		long now = new Date().getTime();
+		properties.put(OgmSessionRepository.CREATION_TIME, now);
+		properties.put(OgmSessionRepository.LAST_ACCESS_TIME, now);
+		properties.put(OgmSessionRepository.MAX_INACTIVE_INTERVAL, 999);
+		properties.put(OgmSessionRepository.ATTRIBUTE_KEY_PREFIX + attributeName, attributeValue);
+		nodeModel.setProperties(properties);
+		data.put("n", nodeModel);
+		r.add(data);
+		
+		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
+		Result result = new QueryResultModel(r, queryStatisticsModel);
+		given(this.session.query(isA(String.class), isA(Map.class))).willReturn(result);
+
+		
+		
+		MapSession saved = new MapSession();
+		saved.setAttribute(attributeName, attributeValue);
+//		given(this.sessionFactory.query(isA(String.class),
+//				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class)))
+//				.willReturn(Collections.singletonList(saved));
+
+		OgmSessionRepository.OgmSession session = this.repository
+				.getSession(saved.getId());
+
+		assertThat(session.getId()).isEqualTo(saved.getId());
+		assertThat(session.isNew()).isFalse();
+
+		assertThat(session.<String>getAttribute(attributeName).orElse(null)).isEqualTo(attributeValue);
+
+//		verify(this.sessionFactory, times(1)).query(isA(String.class),
+//				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class));
+	}
 
 //	@Test
 //	public void getSessionExpired() {
@@ -336,7 +388,7 @@ public class OgmSessionRepositoryTests {
 //				.willReturn(Collections.singletonList(expired));
 //
 //		OgmSessionRepository.OgmSession session = this.repository
-//				.findById(expired.getId());
+//				.getSession(expired.getId());
 //
 //		assertThat(session).isNull();
 //		assertPropagationRequiresNew();
@@ -346,24 +398,6 @@ public class OgmSessionRepositoryTests {
 //				eq(expired.getId()));
 //	}
 //
-//	@Test
-//	public void getSessionFound() {
-//		MapSession saved = new MapSession();
-//		saved.setAttribute("savedName", "savedValue");
-//		given(this.sessionFactory.query(isA(String.class),
-//				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class)))
-//				.willReturn(Collections.singletonList(saved));
-//
-//		OgmSessionRepository.OgmSession session = this.repository
-//				.findById(saved.getId());
-//
-//		assertThat(session.getId()).isEqualTo(saved.getId());
-//		assertThat(session.isNew()).isFalse();
-//		assertThat(session.<String>getAttribute("savedName").orElse(null)).isEqualTo("savedValue");
-//		assertPropagationRequiresNew();
-//		verify(this.sessionFactory, times(1)).query(isA(String.class),
-//				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class));
-//	}
 //
 //	@Test
 //	public void delete() {
