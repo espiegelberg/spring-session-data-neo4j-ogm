@@ -357,25 +357,25 @@ public class OgmSessionRepositoryTests {
 		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
 		Result result = new QueryResultModel(r, queryStatisticsModel);
 		given(this.session.query(isA(String.class), isA(Map.class))).willReturn(result);
-
-		
 		
 		MapSession saved = new MapSession();
 		saved.setAttribute(attributeName, attributeValue);
-//		given(this.sessionFactory.query(isA(String.class),
-//				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class)))
-//				.willReturn(Collections.singletonList(saved));
 
 		OgmSessionRepository.OgmSession session = this.repository
 				.getSession(saved.getId());
 
+		assertThat(session).isNotNull();
+		
 		assertThat(session.getId()).isEqualTo(saved.getId());
 		assertThat(session.isNew()).isFalse();
 
 		assertThat(session.<String>getAttribute(attributeName).orElse(null)).isEqualTo(attributeValue);
-
-//		verify(this.sessionFactory, times(1)).query(isA(String.class),
-//				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class));
+		
+		verify(this.sessionFactory, times(1)).openSession(); 
+		verify(this.session, times(1)).beginTransaction();
+		verify(this.transaction, times(1)).commit();
+		verify(this.transaction, times(1)).close();
+		
 	}
 
 //	@Test
