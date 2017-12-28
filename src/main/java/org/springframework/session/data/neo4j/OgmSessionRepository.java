@@ -55,6 +55,7 @@ import org.springframework.util.StringUtils;
  * Spring's {@link JdbcOperations} to store sessions in a relational database. This
  * implementation does not support publishing of session events.
  * 
+ * @author Vedran Pavic
  * @author Eric Spiegelberg
  */
 public class OgmSessionRepository implements
@@ -227,8 +228,10 @@ public class OgmSessionRepository implements
 	public void save(final OgmSession session) {
 		if (session.isNew()) {
 
-			Map<String, Object> nodeProperties = new HashMap<>();
 			Map<String, Object> parameters = new HashMap<>(1);
+			
+			int size = session.getAttributeNames().size() + 5;			
+			Map<String, Object> nodeProperties = new HashMap<>(size);			
 			parameters.put(NODE_PROPERTEIS, nodeProperties);
 
 			nodeProperties.put(SESSION_ID, session.getId());
@@ -244,7 +247,8 @@ public class OgmSessionRepository implements
 				if (attributeValue.isPresent()) {
 					// TODO performance: Serialize the attributeValue only if it is not a native Neo4j type
 					String key = ATTRIBUTE_KEY_PREFIX + attributeName;
-					byte attributeValueAsBytes[] = serialize(attributeValue.get());
+					Object value = attributeValue.get();
+					byte attributeValueAsBytes[] = serialize(value);
 					nodeProperties.put(key, attributeValueAsBytes);
 				}
 				
@@ -264,9 +268,9 @@ public class OgmSessionRepository implements
 	
 			if (!delta.isEmpty()) {		
 				for (final Map.Entry<String, Object> entry : delta.entrySet()) {
-					// TODO performance: Serialize the attributeValue only if it is not a native Neo4j type
+// TODO performance: Serialize the attributeValue only if it is not a native Neo4j type
 					String key = ATTRIBUTE_KEY_PREFIX + entry.getKey();
-					Object value = entry.getValue();					
+					Object value = entry.getValue();
 					byte attributeValueAsBytes[] = serialize(value);
 					parameters.put(key, attributeValueAsBytes);
 				}
@@ -293,6 +297,7 @@ public class OgmSessionRepository implements
 					logger.warn("TODO: Handle the case where the value is not a Number or String");
 				}
 			}
+
 			String suffix = stringBuilder.toString();
 
 			String updateSessionCypher = updateSessionQuery.replace("%PROPERTIES_TO_UPDATE%", suffix);
@@ -304,15 +309,10 @@ public class OgmSessionRepository implements
 	}
 
 	@Override
-	public void delete(String sessionId) {
-		Map<String, Object> parameters = new HashMap<>();
-		parameters.put(SESSION_ID, sessionId);		
-		executeCypher(this.deleteSessionQuery, parameters);
-	}
-
-	@Override
 	public OgmSession getSession(final String sessionId) {
 
+		OgmSession ogmSession = null;
+				
 		Map<String, Object> parameters = new HashMap<>(1);
 		parameters.put(SESSION_ID, sessionId);
 		
@@ -320,51 +320,55 @@ public class OgmSessionRepository implements
 		
 		Iterator<Map<String, Object>> resultIterator = result.iterator();
 		
-		MapSession session = null;
 		if (resultIterator.hasNext()) {
 		
-			session = new MapSession(sessionId);
-			
 			Map<String, Object> r = resultIterator.next();			
 			NodeModel nodeModel = (NodeModel) r.get("n");
-
-			// TODO: Decide what to do with the principal name
-			String principalName = (String) nodeModel.property(PRINCIPAL_NAME);
-			//session.setPrincipalName(principalName);
+		
+			MapSession session = new MapSession(sessionId);
 			
 			long creationTime = (long) nodeModel.property(CREATION_TIME);			
 			session.setCreationTime(Instant.ofEpochMilli(creationTime));
 			
-			long lastAccessedTime = (long) nodeModel.property(LAST_ACCESS_TIME);
-			session.setLastAccessedTime(Instant.ofEpochMilli(lastAccessedTime));
+			boolean expired = session.isExpired();
 			
-			long maxInactiveInterval = (long) nodeModel.property(MAX_INACTIVE_INTERVAL);
-			session.setMaxInactiveInterval(Duration.ofMillis(maxInactiveInterval));
-			
-			List<Property<String, Object>> propertyList = nodeModel.getPropertyList();
-			for (Property<String, Object> property : propertyList) {
-				String attributeName = property.getKey();
-				if (attributeName.startsWith(ATTRIBUTE_KEY_PREFIX)) {
-					attributeName = attributeName.substring(10);
-					byte bytes[] = (byte[]) property.getValue();
-					Object attributeValue = deserialize(bytes);
-					session.setAttribute(attributeName, attributeValue);
-				}				
-			}			
-		}
-		
-		if (session != null) {
-			boolean expired = session.isExpired(); 
 			if (expired) {
 				delete(sessionId);
 			} else {
-				return new OgmSession(session);
+			
+				long lastAccessedTime = (long) nodeModel.property(LAST_ACCESS_TIME);
+				session.setLastAccessedTime(Instant.ofEpochMilli(lastAccessedTime));
+				
+				long maxInactiveInterval = (long) nodeModel.property(MAX_INACTIVE_INTERVAL);
+				session.setMaxInactiveInterval(Duration.ofMillis(maxInactiveInterval));
+				
+				List<Property<String, Object>> propertyList = nodeModel.getPropertyList();			
+				for (Property<String, Object> property : propertyList) {
+					String attributeName = property.getKey();
+					if (attributeName.startsWith(ATTRIBUTE_KEY_PREFIX)) {
+						attributeName = attributeName.substring(10);
+						byte bytes[] = (byte[]) property.getValue();
+						Object attributeValue = deserialize(bytes);
+						session.setAttribute(attributeName, attributeValue);
+					}				
+				}
+			
+				ogmSession = new OgmSession(session);
+				
 			}
+			
 		}
-
-		return null;
+		
+		return ogmSession;
 	}
 
+	@Override
+	public void delete(String sessionId) {
+		Map<String, Object> parameters = new HashMap<>(1);
+		parameters.put(SESSION_ID, sessionId);		
+		executeCypher(this.deleteSessionQuery, parameters);
+	}
+	
 	public Map<String, OgmSession> findByIndexNameAndIndexValue(String indexName,
 			final String indexValue) {
 		if (!PRINCIPAL_NAME_INDEX_NAME.equals(indexName)) {
@@ -424,12 +428,12 @@ public class OgmSessionRepository implements
 	public void cleanUpExpiredSessions() {
 
 		Date now = new Date();
-		Map<String, Object> parameters = new HashMap<>();
+		Map<String, Object> parameters = new HashMap<>(1);
 		parameters.put(NOW, now.getTime());
 		Result result = executeCypher(deleteSessionsByLastAccessTimeQuery, parameters);
-		int deletedCount = result.queryStatistics().getNodesDeleted();
 		
 		if (logger.isDebugEnabled()) {
+			int deletedCount = result.queryStatistics().getNodesDeleted();
 			logger.debug("Cleaned up " + deletedCount + " expired sessions");
 		}
 	}

@@ -27,7 +27,7 @@ import org.springframework.core.serializer.support.DeserializingConverter;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.session.config.annotation.web.http.SpringHttpSessionConfiguration;
 import org.springframework.session.data.neo4j.OgmSessionRepository;
-import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.session.jdbc.config.annotation.web.http.EnableJdbcHttpSession;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
