@@ -292,7 +292,7 @@ public class OgmSessionRepositoryTests {
 //		this.repository.save(session);
 //
 //		assertThat(session.isNew()).isFalse();
-//		assertPropagationRequiresNew();
+//		
 //		verify(this.sessionFactory, times(1)).update(
 //				and(startsWith("UPDATE"), contains("LAST_ACCESS_TIME")),
 //				isA(PreparedStatementSetter.class));
@@ -330,7 +330,7 @@ public class OgmSessionRepositoryTests {
 		verify(this.transaction, times(1)).commit();
 		verify(this.transaction, times(1)).close();
 	}
-	
+
 	@Test
 	public void getSessionFound() {
 		
@@ -348,8 +348,11 @@ public class OgmSessionRepositoryTests {
 		long now = new Date().getTime();
 		properties.put(OgmSessionRepository.CREATION_TIME, now);
 		properties.put(OgmSessionRepository.LAST_ACCESS_TIME, now);
-		properties.put(OgmSessionRepository.MAX_INACTIVE_INTERVAL, 999);
-		properties.put(OgmSessionRepository.ATTRIBUTE_KEY_PREFIX + attributeName, attributeValue);
+		properties.put(OgmSessionRepository.MAX_INACTIVE_INTERVAL, 999);		
+		byte attributeValueBytes[] = this.repository.serialize(attributeValue);
+		
+		properties.put(OgmSessionRepository.ATTRIBUTE_KEY_PREFIX + attributeName, attributeValueBytes);
+		
 		nodeModel.setProperties(properties);
 		data.put("n", nodeModel);
 		r.add(data);
@@ -377,35 +380,62 @@ public class OgmSessionRepositoryTests {
 		verify(this.transaction, times(1)).close();
 		
 	}
+	
+	@Test
+	public void getSessionExpired() {
+		MapSession expired = new MapSession();		
+		long a = MapSession.DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS + 1;
+		Instant b = Instant.now().minusSeconds(a);		
+		expired.setLastAccessedTime(b);
+		long c = b.toEpochMilli();
+		
+		given(this.sessionFactory.openSession()).willReturn(session);		
+		given(session.beginTransaction()).willReturn(transaction);
+		
+		//return now.minus(this.maxInactiveInterval).compareTo(this.lastAccessedTime) >= 0;
+		
+		NodeModel nodeModel = new NodeModel();
+		Map<String, Object> properties = new HashMap<>();
+		long now = new Date().getTime();
+		properties.put(OgmSessionRepository.CREATION_TIME, 0L);
+		properties.put(OgmSessionRepository.LAST_ACCESS_TIME, 100L);
+		properties.put(OgmSessionRepository.MAX_INACTIVE_INTERVAL, 1);		
+		nodeModel.setProperties(properties);
+		
+		Map<String, Object> data = new HashMap<>();
+		data.put("n", nodeModel);
+		
+		List<Map<String, Object>> r = new ArrayList<>();		
+		r.add(data);
 
-//	@Test
-//	public void getSessionExpired() {
-//		MapSession expired = new MapSession();
-//		expired.setLastAccessedTime(Instant.now().minusSeconds(
-//				MapSession.DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS + 1));
-//		given(this.sessionFactory.query(isA(String.class),
-//				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class)))
-//				.willReturn(Collections.singletonList(expired));
-//
-//		OgmSessionRepository.OgmSession session = this.repository
-//				.getSession(expired.getId());
-//
-//		assertThat(session).isNull();
-//		assertPropagationRequiresNew();
-//		verify(this.sessionFactory, times(1)).query(isA(String.class),
-//				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class));
-//		verify(this.sessionFactory, times(1)).update(startsWith("DELETE"),
-//				eq(expired.getId()));
-//	}
-//
-//
+		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
+		Result result = new QueryResultModel(r, queryStatisticsModel);
+		given(this.session.query(isA(String.class), isA(Map.class))).willReturn(result);
+
+
+		OgmSessionRepository.OgmSession session = this.repository
+				.getSession(expired.getId());
+
+		assertThat(session).isNull();
+
+		//verify(this.sessionFactory, times(1)).update(startsWith("DELETE"), eq(expired.getId()));
+		//verify(this.repository, times(1)).delete(expiredSession.getId());
+		
+		verify(this.sessionFactory, times(2)).openSession(); 
+		verify(this.session, times(2)).beginTransaction();
+		verify(this.transaction, times(2)).commit();
+		verify(this.transaction, times(2)).close();
+		
+	}
+
+
 //	@Test
 //	public void delete() {
 //		String sessionId = "testSessionId";
 //
 //		this.repository.deleteById(sessionId);
 //
-//		assertPropagationRequiresNew();
+//		
 //		verify(this.sessionFactory, times(1)).update(startsWith("DELETE"), eq(sessionId));
 //	}
 //
@@ -433,7 +463,7 @@ public class OgmSessionRepositoryTests {
 //						principal);
 //
 //		assertThat(sessions).isEmpty();
-//		assertPropagationRequiresNew();
+//		
 //		verify(this.sessionFactory, times(1)).query(isA(String.class),
 //				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class));
 //	}
@@ -460,7 +490,7 @@ public class OgmSessionRepositoryTests {
 //						principal);
 //
 //		assertThat(sessions).hasSize(2);
-//		assertPropagationRequiresNew();
+//		
 //		verify(this.sessionFactory, times(1)).query(isA(String.class),
 //				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class));
 //	}
@@ -469,7 +499,7 @@ public class OgmSessionRepositoryTests {
 //	public void cleanupExpiredSessions() {
 //		this.repository.cleanUpExpiredSessions();
 //
-//		//assertPropagationRequiresNew();
+//		//
 //		verify(this.sessionFactory, times(1)).update(startsWith("DELETE"), anyLong());
 //	}
 

@@ -344,19 +344,18 @@ public class OgmSessionRepository implements
 			
 			long creationTime = (long) nodeModel.property(CREATION_TIME);			
 			session.setCreationTime(Instant.ofEpochMilli(creationTime));
+
+			long lastAccessedTime = ((Number) nodeModel.property(LAST_ACCESS_TIME)).longValue();
+			session.setLastAccessedTime(Instant.ofEpochMilli(lastAccessedTime));
 			
+			long maxInactiveInterval = ((Number) nodeModel.property(MAX_INACTIVE_INTERVAL)).longValue();
+			session.setMaxInactiveInterval(Duration.ofMillis(maxInactiveInterval));
+
 			boolean expired = session.isExpired();
 			
 			if (expired) {
 				delete(sessionId);
 			} else {
-			
-				
-				long lastAccessedTime = ((Number) nodeModel.property(LAST_ACCESS_TIME)).longValue();
-				session.setLastAccessedTime(Instant.ofEpochMilli(lastAccessedTime));
-				
-				long maxInactiveInterval = ((Number) nodeModel.property(MAX_INACTIVE_INTERVAL)).longValue();
-				session.setMaxInactiveInterval(Duration.ofMillis(maxInactiveInterval));
 				
 				List<Property<String, Object>> propertyList = nodeModel.getPropertyList();			
 				for (Property<String, Object> property : propertyList) {
@@ -485,7 +484,7 @@ public class OgmSessionRepository implements
 				getQuery(DELETE_SESSIONS_BY_LAST_ACCESS_TIME_QUERY);
 	}
 	
-	private byte[] serialize(Object attributeValue) {		
+	public byte[] serialize(Object attributeValue) {		
 		byte bytes[] = (byte[]) this.conversionService.convert(attributeValue,
 				TypeDescriptor.valueOf(Object.class),
 				TypeDescriptor.valueOf(byte[].class));
@@ -493,7 +492,7 @@ public class OgmSessionRepository implements
 		return bytes;
 	}
 
-	private Object deserialize(Object attributeValue) {
+	public Object deserialize(Object attributeValue) {
 		Object o = this.conversionService.convert(attributeValue, TypeDescriptor.valueOf(byte[].class), TypeDescriptor.valueOf(Object.class));
 		return o;		
 	}
