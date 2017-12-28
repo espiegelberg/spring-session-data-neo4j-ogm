@@ -283,7 +283,8 @@ public class OgmSessionRepository implements
 				Entry<String, Object> entry = entries.next();
 				String key = entry.getKey();
 				Object value = entry.getValue();
-				if (value instanceof Number || value instanceof String) {
+
+				if (value != null) {
 					stringBuilder.append("n.");
 					stringBuilder.append(key);
 					stringBuilder.append("={");					
@@ -292,9 +293,6 @@ public class OgmSessionRepository implements
 					if (entries.hasNext()) {
 						stringBuilder.append(",");
 					}
-				} else {
-					//TODO: Handle the case where the value is not a Number or String
-					logger.warn("TODO: Handle the case where the value is not a Number or String");
 				}
 			}
 
