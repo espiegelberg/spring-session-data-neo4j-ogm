@@ -16,9 +16,15 @@
 package org.springframework.session.data.neo4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -27,7 +33,12 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.neo4j.ogm.model.Result;
+import org.neo4j.ogm.response.model.QueryResultModel;
+import org.neo4j.ogm.response.model.QueryStatisticsModel;
+import org.neo4j.ogm.session.Session;
 import org.neo4j.ogm.session.SessionFactory;
+import org.neo4j.ogm.transaction.Transaction;
 import org.springframework.session.MapSession;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -47,8 +58,14 @@ public class OgmSessionRepositoryTests {
 	public ExpectedException thrown = ExpectedException.none();
 
 	@Mock
-	private SessionFactory sessionFactory;
+	private Session session;
 
+	@Mock
+	private Transaction transaction;
+	
+	@Mock
+	private SessionFactory sessionFactory;
+	
 	private OgmSessionRepository repository;
 	
 	@Before
@@ -286,23 +303,29 @@ public class OgmSessionRepositoryTests {
 //		assertThat(session.isNew()).isFalse();
 //		verifyZeroInteractions(this.sessionFactory);
 //	}
-//
-//	@Test
-//	public void getSessionNotFound() {
-//		String sessionId = "testSessionId";
-//		given(this.sessionFactory.query(isA(String.class),
-//				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class)))
-//				.willReturn(Collections.emptyList());
-//
-//		OgmSessionRepository.OgmSession session = this.repository
-//				.findById(sessionId);
-//
-//		assertThat(session).isNull();
-//		assertPropagationRequiresNew();
-//		verify(this.sessionFactory, times(1)).query(isA(String.class),
-//				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class));
-//	}
-//
+
+	@Test
+	public void getSessionNotFound() {
+		String sessionId = "testSessionId";
+
+		given(this.sessionFactory.openSession()).willReturn(session);		
+		given(session.beginTransaction()).willReturn(transaction);
+		
+		List<Map<String, Object>> r = new ArrayList<>();
+		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
+		Result result = new QueryResultModel(r, queryStatisticsModel);
+		given(this.session.query(isA(String.class), isA(Map.class))).willReturn(result);
+		
+		OgmSessionRepository.OgmSession session = this.repository
+				.getSession(sessionId);
+
+		assertThat(session).isNull();
+		verify(this.sessionFactory, times(1)).openSession(); 
+		verify(this.session, times(1)).beginTransaction();
+		verify(this.transaction, times(1)).commit();
+		verify(this.transaction, times(1)).close();
+	}
+
 //	@Test
 //	public void getSessionExpired() {
 //		MapSession expired = new MapSession();
