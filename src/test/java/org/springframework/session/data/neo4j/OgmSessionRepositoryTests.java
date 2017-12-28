@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2017 the original author or authors.
+ * Copyright 2014-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
 package org.springframework.session.data.neo4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verifyZeroInteractions;
+
+import java.time.Duration;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -25,10 +28,11 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.neo4j.ogm.session.SessionFactory;
+import org.springframework.session.MapSession;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
- * Tests for {@link JdbcOperationsSessionRepository}.
+ * Tests for {@link OgmSessionRepository}.
  *
  * @author Eric Spiegelberg
  * @author Vedran Pavic
@@ -42,17 +46,8 @@ public class OgmSessionRepositoryTests {
 	@Rule
 	public ExpectedException thrown = ExpectedException.none();
 
-//	@Mock
-//	private DataSource dataSource;
-
-//	@Mock
-//	private JdbcOperations jdbcOperations;
-
 	@Mock
 	private SessionFactory sessionFactory;
-	
-//	@Mock
-//	private PlatformTransactionManager transactionManager;
 
 	private OgmSessionRepository repository;
 	
@@ -76,22 +71,6 @@ public class OgmSessionRepositoryTests {
 
 		new OgmSessionRepository(null);
 	}
-
-//	@Test
-//	public void constructorNullJdbcOperations() {
-//		this.thrown.expect(IllegalArgumentException.class);
-//		this.thrown.expectMessage("Property 'sessionFactory' must not be null");
-//
-//		new OgmSessionRepository(null);
-//	}
-
-//	@Test
-//	public void constructorNullTransactionManager() {
-//		this.thrown.expect(IllegalArgumentException.class);
-//		this.thrown.expectMessage("Property 'transactionManager' is required");
-//
-//		new OgmSessionRepository(this.session, null);
-//	}
 
 	@Test
 	public void setLabelNull() {
@@ -125,22 +104,6 @@ public class OgmSessionRepositoryTests {
 		this.repository.setCreateSessionQuery(" ");
 	}
 
-//	@Test
-//	public void setCreateSessionAttributeQueryNull() {
-//		this.thrown.expect(IllegalArgumentException.class);
-//		this.thrown.expectMessage("Query must not be empty");
-//
-//		this.repository.setCreateSessionAttributeQuery(null);
-//	}
-
-//	@Test
-//	public void setCreateSessionAttributeQueryEmpty() {
-//		this.thrown.expect(IllegalArgumentException.class);
-//		this.thrown.expectMessage("Query must not be empty");
-//
-//		this.repository.setCreateSessionAttributeQuery(" ");
-//	}
-
 	@Test
 	public void setGetSessionQueryNull() {
 		this.thrown.expect(IllegalArgumentException.class);
@@ -172,38 +135,6 @@ public class OgmSessionRepositoryTests {
 
 		this.repository.setUpdateSessionQuery(" ");
 	}
-
-//	@Test
-//	public void setUpdateSessionAttributeQueryNull() {
-//		this.thrown.expect(IllegalArgumentException.class);
-//		this.thrown.expectMessage("Query must not be empty");
-//
-//		this.repository.setUpdateSessionAttributeQuery(null);
-//	}
-
-//	@Test
-//	public void setUpdateSessionAttributeQueryEmpty() {
-//		this.thrown.expect(IllegalArgumentException.class);
-//		this.thrown.expectMessage("Query must not be empty");
-//
-//		this.repository.setUpdateSessionAttributeQuery(" ");
-//	}
-
-//	@Test
-//	public void setDeleteSessionAttributeQueryNull() {
-//		this.thrown.expect(IllegalArgumentException.class);
-//		this.thrown.expectMessage("Query must not be empty");
-//
-//		this.repository.setDeleteSessionAttributeQuery(null);
-//	}
-//
-//	@Test
-//	public void setDeleteSessionAttributeQueryEmpty() {
-//		this.thrown.expect(IllegalArgumentException.class);
-//		this.thrown.expectMessage("Query must not be empty");
-//
-//		this.repository.setDeleteSessionAttributeQuery(" ");
-//	}
 
 	@Test
 	public void setDeleteSessionQueryNull() {
@@ -253,49 +184,40 @@ public class OgmSessionRepositoryTests {
 		this.repository.setDeleteSessionsByLastAccessTimeQuery(" ");
 	}
 
-//	@Test
-//	public void setLobHandlerNull() {
-//		this.thrown.expect(IllegalArgumentException.class);
-//		this.thrown.expectMessage("LobHandler must not be null");
-//
-//		this.repository.setLobHandler(null);
-//	}
-//
-//	@Test
-//	public void setConversionServiceNull() {
-//		this.thrown.expect(IllegalArgumentException.class);
-//		this.thrown.expectMessage("conversionService must not be null");
-//
-//		this.repository.setConversionService(null);
-//	}
-//
-//	@Test
-//	public void createSessionDefaultMaxInactiveInterval() throws Exception {
-//		JdbcOperationsSessionRepository.JdbcSession session = this.repository
-//				.createSession();
-//
-//		assertThat(session.isNew()).isTrue();
-//		assertThat(session.getMaxInactiveInterval())
-//				.isEqualTo(new MapSession().getMaxInactiveInterval());
-//		verifyZeroInteractions(this.session);
-//	}
-//
-//	@Test
-//	public void createSessionCustomMaxInactiveInterval() throws Exception {
-//		int interval = 1;
-//		this.repository.setDefaultMaxInactiveInterval(interval);
-//
-//		JdbcOperationsSessionRepository.JdbcSession session = this.repository
-//				.createSession();
-//
-//		assertThat(session.isNew()).isTrue();
-//		assertThat(session.getMaxInactiveInterval()).isEqualTo(Duration.ofSeconds(interval));
-//		verifyZeroInteractions(this.session);
-//	}
-//
+	@Test
+	public void setConversionServiceNull() {
+		this.thrown.expect(IllegalArgumentException.class);
+		this.thrown.expectMessage("conversionService must not be null");
+
+		this.repository.setConversionService(null);
+	}
+
+	@Test
+	public void createSessionDefaultMaxInactiveInterval() throws Exception {
+		OgmSessionRepository.OgmSession session = this.repository.createSession();
+		
+		assertThat(session.isNew()).isTrue();
+		assertThat(session.getMaxInactiveInterval())
+				.isEqualTo(new MapSession().getMaxInactiveInterval());
+		verifyZeroInteractions(this.sessionFactory);
+	}
+
+	@Test
+	public void createSessionCustomMaxInactiveInterval() throws Exception {
+		int interval = 1;
+		this.repository.setDefaultMaxInactiveInterval(interval);
+
+		OgmSessionRepository.OgmSession session = this.repository
+				.createSession();
+
+		assertThat(session.isNew()).isTrue();
+		assertThat(session.getMaxInactiveInterval()).isEqualTo(Duration.ofSeconds(interval));
+		verifyZeroInteractions(this.sessionFactory);
+	}
+
 //	@Test
 //	public void saveNewWithoutAttributes() {
-//		JdbcOperationsSessionRepository.JdbcSession session = this.repository
+//		OgmSessionRepository.OgmSession session = this.repository
 //				.createSession();
 //
 //		this.repository.save(session);
@@ -309,7 +231,7 @@ public class OgmSessionRepositoryTests {
 //
 //	@Test
 //	public void saveNewWithAttributes() {
-//		JdbcOperationsSessionRepository.JdbcSession session = this.repository
+//		OgmSessionRepository.OgmSession session = this.repository
 //				.createSession();
 //		session.setAttribute("testName", "testValue");
 //
@@ -326,7 +248,7 @@ public class OgmSessionRepositoryTests {
 //
 //	@Test
 //	public void saveUpdatedAttributes() {
-//		JdbcOperationsSessionRepository.JdbcSession session = this.repository.new JdbcSession(
+//		OgmSessionRepository.OgmSession session = this.repository.new JdbcSession(
 //				new MapSession());
 //		session.setAttribute("testName", "testValue");
 //
@@ -334,14 +256,14 @@ public class OgmSessionRepositoryTests {
 //
 //		assertThat(session.isNew()).isFalse();
 //		assertPropagationRequiresNew();
-//		verify(this.session, times(1)).update(
+//		verify(this.sessionFactory, times(1)).update(
 //				and(startsWith("UPDATE"), contains("ATTRIBUTE_BYTES")),
 //				isA(PreparedStatementSetter.class));
 //	}
 //
 //	@Test
 //	public void saveUpdatedLastAccessedTime() {
-//		JdbcOperationsSessionRepository.JdbcSession session = this.repository.new JdbcSession(
+//		OgmSessionRepository.OgmSession session = this.repository.new JdbcSession(
 //				new MapSession());
 //		session.setLastAccessedTime(Instant.now());
 //
@@ -349,35 +271,35 @@ public class OgmSessionRepositoryTests {
 //
 //		assertThat(session.isNew()).isFalse();
 //		assertPropagationRequiresNew();
-//		verify(this.session, times(1)).update(
+//		verify(this.sessionFactory, times(1)).update(
 //				and(startsWith("UPDATE"), contains("LAST_ACCESS_TIME")),
 //				isA(PreparedStatementSetter.class));
 //	}
 //
 //	@Test
 //	public void saveUnchanged() {
-//		JdbcOperationsSessionRepository.JdbcSession session = this.repository.new JdbcSession(
+//		OgmSessionRepository.OgmSession session = this.repository.new JdbcSession(
 //				new MapSession());
 //
 //		this.repository.save(session);
 //
 //		assertThat(session.isNew()).isFalse();
-//		verifyZeroInteractions(this.session);
+//		verifyZeroInteractions(this.sessionFactory);
 //	}
 //
 //	@Test
 //	public void getSessionNotFound() {
 //		String sessionId = "testSessionId";
-//		given(this.session.query(isA(String.class),
+//		given(this.sessionFactory.query(isA(String.class),
 //				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class)))
 //				.willReturn(Collections.emptyList());
 //
-//		JdbcOperationsSessionRepository.JdbcSession session = this.repository
+//		OgmSessionRepository.OgmSession session = this.repository
 //				.findById(sessionId);
 //
 //		assertThat(session).isNull();
 //		assertPropagationRequiresNew();
-//		verify(this.session, times(1)).query(isA(String.class),
+//		verify(this.sessionFactory, times(1)).query(isA(String.class),
 //				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class));
 //	}
 //
@@ -386,18 +308,18 @@ public class OgmSessionRepositoryTests {
 //		MapSession expired = new MapSession();
 //		expired.setLastAccessedTime(Instant.now().minusSeconds(
 //				MapSession.DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS + 1));
-//		given(this.session.query(isA(String.class),
+//		given(this.sessionFactory.query(isA(String.class),
 //				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class)))
 //				.willReturn(Collections.singletonList(expired));
 //
-//		JdbcOperationsSessionRepository.JdbcSession session = this.repository
+//		OgmSessionRepository.OgmSession session = this.repository
 //				.findById(expired.getId());
 //
 //		assertThat(session).isNull();
 //		assertPropagationRequiresNew();
-//		verify(this.session, times(1)).query(isA(String.class),
+//		verify(this.sessionFactory, times(1)).query(isA(String.class),
 //				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class));
-//		verify(this.session, times(1)).update(startsWith("DELETE"),
+//		verify(this.sessionFactory, times(1)).update(startsWith("DELETE"),
 //				eq(expired.getId()));
 //	}
 //
@@ -405,18 +327,18 @@ public class OgmSessionRepositoryTests {
 //	public void getSessionFound() {
 //		MapSession saved = new MapSession();
 //		saved.setAttribute("savedName", "savedValue");
-//		given(this.session.query(isA(String.class),
+//		given(this.sessionFactory.query(isA(String.class),
 //				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class)))
 //				.willReturn(Collections.singletonList(saved));
 //
-//		JdbcOperationsSessionRepository.JdbcSession session = this.repository
+//		OgmSessionRepository.OgmSession session = this.repository
 //				.findById(saved.getId());
 //
 //		assertThat(session.getId()).isEqualTo(saved.getId());
 //		assertThat(session.isNew()).isFalse();
 //		assertThat(session.<String>getAttribute("savedName").orElse(null)).isEqualTo("savedValue");
 //		assertPropagationRequiresNew();
-//		verify(this.session, times(1)).query(isA(String.class),
+//		verify(this.sessionFactory, times(1)).query(isA(String.class),
 //				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class));
 //	}
 //
@@ -427,35 +349,35 @@ public class OgmSessionRepositoryTests {
 //		this.repository.deleteById(sessionId);
 //
 //		assertPropagationRequiresNew();
-//		verify(this.session, times(1)).update(startsWith("DELETE"), eq(sessionId));
+//		verify(this.sessionFactory, times(1)).update(startsWith("DELETE"), eq(sessionId));
 //	}
 //
 //	@Test
 //	public void findByIndexNameAndIndexValueUnknownIndexName() {
 //		String indexValue = "testIndexValue";
 //
-//		Map<String, JdbcOperationsSessionRepository.JdbcSession> sessions = this.repository
+//		Map<String, OgmSessionRepository.OgmSession> sessions = this.repository
 //				.findByIndexNameAndIndexValue("testIndexName", indexValue);
 //
 //		assertThat(sessions).isEmpty();
-//		verifyZeroInteractions(this.session);
+//		verifyZeroInteractions(this.sessionFactory);
 //	}
 //
 //	@Test
 //	public void findByIndexNameAndIndexValuePrincipalIndexNameNotFound() {
 //		String principal = "username";
-//		given(this.session.query(isA(String.class),
+//		given(this.sessionFactory.query(isA(String.class),
 //				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class)))
 //				.willReturn(Collections.emptyList());
 //
-//		Map<String, JdbcOperationsSessionRepository.JdbcSession> sessions = this.repository
+//		Map<String, OgmSessionRepository.OgmSession> sessions = this.repository
 //				.findByIndexNameAndIndexValue(
 //						FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME,
 //						principal);
 //
 //		assertThat(sessions).isEmpty();
 //		assertPropagationRequiresNew();
-//		verify(this.session, times(1)).query(isA(String.class),
+//		verify(this.sessionFactory, times(1)).query(isA(String.class),
 //				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class));
 //	}
 //
@@ -471,35 +393,104 @@ public class OgmSessionRepositoryTests {
 //		MapSession saved2 = new MapSession();
 //		saved2.setAttribute(SPRING_SECURITY_CONTEXT, authentication);
 //		saved.add(saved2);
-//		given(this.session.query(isA(String.class),
+//		given(this.sessionFactory.query(isA(String.class),
 //				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class)))
 //				.willReturn(saved);
 //
-//		Map<String, JdbcOperationsSessionRepository.JdbcSession> sessions = this.repository
+//		Map<String, OgmSessionRepository.OgmSession> sessions = this.repository
 //				.findByIndexNameAndIndexValue(
 //						FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME,
 //						principal);
 //
 //		assertThat(sessions).hasSize(2);
 //		assertPropagationRequiresNew();
-//		verify(this.session, times(1)).query(isA(String.class),
+//		verify(this.sessionFactory, times(1)).query(isA(String.class),
 //				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class));
 //	}
-//
+
 //	@Test
 //	public void cleanupExpiredSessions() {
 //		this.repository.cleanUpExpiredSessions();
 //
-//		assertPropagationRequiresNew();
-//		verify(this.session, times(1)).update(startsWith("DELETE"), anyLong());
-//	}
-//
-//	private void assertPropagationRequiresNew() {
-//		ArgumentCaptor<TransactionDefinition> argument =
-//				ArgumentCaptor.forClass(TransactionDefinition.class);
-//		verify(this.transactionManager, atLeastOnce()).getTransaction(argument.capture());
-//		assertThat(argument.getValue().getPropagationBehavior())
-//				.isEqualTo(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+//		//assertPropagationRequiresNew();
+//		verify(this.sessionFactory, times(1)).update(startsWith("DELETE"), anyLong());
 //	}
 
+//	@Test
+//	public void primative() {
+//
+//		Object value = Integer.parseInt("1");
+//		boolean suppored = isNeo4jSupportedType(value);
+//		Assert.assertTrue(suppored);
+//		
+//		value = new Long(2).longValue();
+//		suppored = isNeo4jSupportedType(value);
+//		Assert.assertTrue(suppored);
+//		
+//		value = Float.parseFloat("1.0");
+//		suppored = isNeo4jSupportedType(value);
+//		Assert.assertTrue(suppored);
+//		
+//		value = Double.parseDouble("1.0");
+//		suppored = isNeo4jSupportedType(value);
+//		Assert.assertTrue(suppored);
+//		
+//		value = new Boolean(true).booleanValue();
+//		suppored = isNeo4jSupportedType(value);
+//		Assert.assertTrue(suppored);
+//		
+//		value = new byte['a'];
+//		suppored = isNeo4jSupportedType(value);
+//		Assert.assertTrue(suppored);
+//		
+//		value = "test".getBytes();
+//		suppored = isNeo4jSupportedType(value);
+//		Assert.assertTrue(suppored);
+//		
+//		value = new Boolean[] { true, false };
+//		suppored = isNeo4jSupportedType(value);
+//		Assert.assertTrue(suppored);
+//		
+//		value = "Test";
+//		suppored = isNeo4jSupportedType(value);
+//		Assert.assertTrue(suppored);
+//		
+//		value = new String[] { "Test1", "Test2" };
+//		suppored = isNeo4jSupportedType(value);
+//		Assert.assertTrue(suppored);
+//		
+//	}
+//	
+//	/**
+//	 * Property values in Neo4j could be either Java primitive types (float, double, int, boolean, byte,... ), Strings or array of both.
+//	 * 
+//	 * @param o The object to evaluate.
+//	 * @return boolean true if the object is a Neo4j supported data type otherwise false.
+//	 */
+//	protected boolean isNeo4jSupportedType(Object o) {
+//	
+//		Class<?> clazz = o.getClass();
+//		boolean supported = ClassUtils.isPrimitiveOrWrapper(clazz);
+//		
+//		if (!supported) {
+//			supported = ClassUtils.isPrimitiveWrapperArray(clazz);	
+//		}
+//
+//		if (!supported) {
+//			supported = o instanceof byte[];	
+//		}
+//		
+//		if (!supported) {
+//			supported = o instanceof String;	
+//		}
+//		
+//		if (!supported) {
+//			supported = o instanceof String[];	
+//		}
+//		
+//		return supported;
+//		
+//	}
+	
+	
 }
