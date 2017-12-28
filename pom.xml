@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>org.springframework.session</groupId>
-	<artifactId>spring-session-data-neo4j</artifactId>
+	<artifactId>spring-session-data-neo4j-ogm</artifactId>
 	<version>2.0.0.BUILD-SNAPSHOT</version>
 
 	<name>Spring Session Neo4j OGM</name>
@@ -40,6 +40,16 @@
 			</roles>
 			<timezone>-6</timezone>
 		</developer>
+		<developer>
+			<id>espiegelberg</id>
+			<name>Eric Spiegelberg</name>
+			<email>eric(at)graphaware.com</email>
+			<organization>GraphAware</organization>
+			<roles>
+				<role>Developer</role>
+			</roles>
+			<timezone>-5</timezone>
+		</developer>
 	</developers>
 
 	<licenses>
@@ -74,16 +84,18 @@
 		<jackson.version>2.9.1</jackson.version>
 		<junit.version>4.12</junit.version>
 		<mockito.version>2.10.0</mockito.version>
-		
+<!--  		
 		<mongo.version>3.5.0</mongo.version>
 		<mongo-reactivestreams.version>1.6.0</mongo-reactivestreams.version>
-		
-		<neo4j.version>3.0.2</neo4j.version>
+
 		<reactor.version>Bismuth-SR4</reactor.version>
+-->
+		<neo4j.ogm.version>3.0.2</neo4j.ogm.version>
+
 		<spring.version>5.0.2.RELEASE</spring.version>
 		<spring-data.version>Kay-SR2</spring-data.version>
 		<spring-security.version>5.0.0.RELEASE</spring-security.version>
-		<spring-session.version>2.0.0.RC2</spring-session.version>
+		<spring-session.version>2.0.0.BUILD-SNAPSHOT</spring-session.version>
 	</properties>
 
 	<profiles>
@@ -450,7 +462,7 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
-
+<!--
 			<dependency>
 				<groupId>io.projectreactor</groupId>
 				<artifactId>reactor-bom</artifactId>
@@ -458,17 +470,31 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
+-->
 		</dependencies>
 	</dependencyManagement>
 
 	<dependencies>
-
+<!--
 		<dependency>
 			<groupId>org.springframework.session</groupId>
 			<artifactId>spring-session-core</artifactId>
 			<version>${spring-session.version}</version>
 		</dependency>
+-->
+		<dependency>
+			<groupId>org.springframework.session</groupId>
+			<artifactId>spring-session</artifactId>
+			<version>${spring-session.version}</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.springframework</groupId>
+		    <artifactId>spring-context</artifactId>
+		    <version>${spring.version}</version>
+		</dependency>
 
+<!--
 		<dependency>
 			<groupId>org.springframework.data</groupId>
 			<artifactId>spring-data-mongodb</artifactId>
@@ -490,10 +516,11 @@
 			<version>${mongo.version}</version>
 			<optional>true</optional>
 		</dependency>
+-->
 		<dependency>
 		    <groupId>org.neo4j</groupId>
 		    <artifactId>neo4j-ogm-core</artifactId>
-		    <version>${neo4j.version}</version>
+		    <version>${neo4j.ogm.version}</version>
 		    <optional>true</optional>
 		</dependency>
 		
@@ -502,13 +529,13 @@
 			<artifactId>jackson-databind</artifactId>
 			<version>${jackson.version}</version>
 		</dependency>
-
+<!--
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-core</artifactId>
 			<optional>true</optional>
 		</dependency>
-		
+-->
 		<!-- Test dependencies -->
 
 		<dependency>
@@ -522,14 +549,14 @@
 			<artifactId>spring-web</artifactId>
 			<scope>test</scope>
 		</dependency>
-
+<!--
 		<dependency>
 			<groupId>de.flapdoodle.embed</groupId>
 			<artifactId>de.flapdoodle.embed.mongo</artifactId>
 			<version>${flapdoodle.version}</version>
 			<scope>test</scope>
 		</dependency>
-
+-->
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
@@ -563,7 +590,7 @@
 			<version>${mockito.version}</version>
 			<scope>test</scope>
 		</dependency>
-
+<!--
 		<dependency>
 			<groupId>io.projectreactor</groupId>
 			<artifactId>reactor-test</artifactId>
@@ -576,7 +603,7 @@
 			<version>${mongo.version}</version>
 			<scope>test</scope>
 		</dependency>
-<!--
+
 		<dependency>
 			<groupId>org.mongodb</groupId>
 			<artifactId>mongodb-driver-reactivestreams</artifactId>

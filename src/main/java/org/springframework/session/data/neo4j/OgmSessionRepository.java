@@ -46,7 +46,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.MapSession;
 import org.springframework.session.Session;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -128,7 +127,7 @@ public class OgmSessionRepository implements
 	 * @param transactionManager the {@link PlatformTransactionManager} to use
 	 */
 	public OgmSessionRepository(SessionFactory sessionFactory) {
-		Assert.notNull(sessionFactory, "SessionFactory must not be null");
+		Assert.notNull(sessionFactory, "Property 'sessionFactory' must not be null");
 		this.sessionFactory = sessionFactory;
 		this.conversionService = createDefaultConversionService();
 		prepareQueries();
@@ -139,7 +138,7 @@ public class OgmSessionRepository implements
 	 * @param label the label
 	 */
 	public void setLabel(String label) {
-		Assert.hasText(label, "label must not be empty");
+		Assert.hasText(label, "Label must not be empty");
 		this.label = label.trim();
 		prepareQueries();
 	}
@@ -208,14 +207,14 @@ public class OgmSessionRepository implements
 		this.defaultMaxInactiveInterval = defaultMaxInactiveInterval;
 	}
 
-	/**
-	 * Sets the {@link ConversionService} to use.
-	 * @param conversionService the converter to set
-	 */
-	public void setConversionService(ConversionService conversionService) {
-		Assert.notNull(conversionService, "conversionService must not be null");
-		this.conversionService = conversionService;
-	}
+//	/**
+//	 * Sets the {@link ConversionService} to use.
+//	 * @param conversionService the converter to set
+//	 */
+//	public void setConversionService(ConversionService conversionService) {
+//		Assert.notNull(conversionService, "conversionService must not be null");
+//		this.conversionService = conversionService;
+//	}
 
 	public OgmSession createSession() {
 		OgmSession session = new OgmSession();
@@ -305,7 +304,14 @@ public class OgmSessionRepository implements
 	}
 
 	@Override
-	public OgmSession findById(final String sessionId) {
+	public void delete(String sessionId) {
+		Map<String, Object> parameters = new HashMap<>();
+		parameters.put(SESSION_ID, sessionId);		
+		executeCypher(this.deleteSessionQuery, parameters);
+	}
+
+	@Override
+	public OgmSession getSession(final String sessionId) {
 
 		Map<String, Object> parameters = new HashMap<>(1);
 		parameters.put(SESSION_ID, sessionId);
@@ -349,21 +355,13 @@ public class OgmSessionRepository implements
 		
 		if (session != null) {
 			if (session.isExpired()) {
-				deleteById(sessionId);
+				delete(sessionId);
 			} else {
 				return new OgmSession(session);
 			}
 		}
 
 		return null;
-	}
-
-
-	@Override
-	public void deleteById(final String sessionId) {		
-		Map<String, Object> parameters = new HashMap<>();
-		parameters.put(SESSION_ID, sessionId);		
-		executeCypher(this.deleteSessionQuery, parameters);		
 	}
 
 	public Map<String, OgmSession> findByIndexNameAndIndexValue(String indexName,
@@ -521,7 +519,7 @@ public class OgmSessionRepository implements
 			return this.delegate.getId();
 		}
 
-		public <T> T getAttribute(String attributeName) {
+		public <T> Optional<T> getAttribute(String attributeName) {
 			return this.delegate.getAttribute(attributeName);
 		}
 

@@ -15,32 +15,21 @@
  */
 package org.springframework.session.data.neo4j.config.annotation.web.http;
 
-import java.util.Map;
-
 import javax.sql.DataSource;
 
 import org.neo4j.ogm.session.SessionFactory;
-import org.springframework.beans.factory.BeanClassLoaderAware;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.EmbeddedValueResolverAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.ImportAware;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
-import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.convert.ConversionService;
-import org.springframework.core.convert.support.GenericConversionService;
 import org.springframework.core.serializer.support.DeserializingConverter;
-import org.springframework.core.serializer.support.SerializingConverter;
-import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.session.config.annotation.web.http.SpringHttpSessionConfiguration;
 import org.springframework.session.data.neo4j.OgmSessionRepository;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
-import org.springframework.util.StringValueResolver;
 
 // TODO: Update JavaDoc
 /**
@@ -58,22 +47,22 @@ import org.springframework.util.StringValueResolver;
  */
 @Configuration
 @EnableScheduling
-public class OgmHttpSessionConfiguration extends SpringHttpSessionConfiguration
-		implements BeanClassLoaderAware, ImportAware, EmbeddedValueResolverAware {
+public class OgmHttpSessionConfiguration extends SpringHttpSessionConfiguration {
+		//implements BeanClassLoaderAware, ImportAware, EmbeddedValueResolverAware {
 
 	private String label;
 
 	private Integer maxInactiveIntervalInSeconds;
 
-	@Autowired(required = false)
-	@Qualifier("conversionService")
-	private ConversionService conversionService;
-
-	private ConversionService springSessionConversionService;
-
-	private ClassLoader classLoader;
-
-	private StringValueResolver embeddedValueResolver;
+//	@Autowired(required = false)
+//	@Qualifier("conversionService")
+//	private ConversionService conversionService;
+//
+//	private ConversionService springSessionConversionService;
+//
+//	private ClassLoader classLoader;
+//
+//	private StringValueResolver embeddedValueResolver;
 
 	@Bean
 	public OgmSessionRepository sessionRepository(
@@ -88,16 +77,17 @@ public class OgmHttpSessionConfiguration extends SpringHttpSessionConfiguration
 		sessionRepository
 				.setDefaultMaxInactiveInterval(this.maxInactiveIntervalInSeconds);
 
-		if (this.springSessionConversionService != null) {
-			sessionRepository.setConversionService(this.springSessionConversionService);
-		}
-		else if (this.conversionService != null) {
-			sessionRepository.setConversionService(this.conversionService);
-		}
-		else if (deserializingConverterSupportsCustomClassLoader()) {
-			GenericConversionService conversionService = createConversionServiceWithBeanClassLoader();
-			sessionRepository.setConversionService(conversionService);
-		}
+// TODO: What is the code below 91 used for? Is it needed?
+//		if (this.springSessionConversionService != null) {
+//			sessionRepository.setConversionService(this.springSessionConversionService);
+//		}
+//		else if (this.conversionService != null) {
+//			sessionRepository.setConversionService(this.conversionService);
+//		}
+//		else if (deserializingConverterSupportsCustomClassLoader()) {
+//			GenericConversionService conversionService = createConversionServiceWithBeanClassLoader();
+//			sessionRepository.setConversionService(conversionService);
+//		}
 		return sessionRepository;
 	}
 
@@ -109,27 +99,27 @@ public class OgmHttpSessionConfiguration extends SpringHttpSessionConfiguration
 	 *
 	 * @return the default {@link ConversionService}
 	 */
-	private GenericConversionService createConversionServiceWithBeanClassLoader() {
-		GenericConversionService conversionService = new GenericConversionService();
-		conversionService.addConverter(Object.class, byte[].class,
-				new SerializingConverter());
-		conversionService.addConverter(byte[].class, Object.class,
-				new DeserializingConverter(this.classLoader));
-		return conversionService;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.springframework.beans.factory.BeanClassLoaderAware#setBeanClassLoader(java.lang.ClassLoader)
-	 */
-	public void setBeanClassLoader(ClassLoader classLoader) {
-		this.classLoader = classLoader;
-	}
-
-	@Autowired(required = false)
-	@Qualifier("springSessionConversionService")
-	public void setSpringSessionConversionService(ConversionService conversionService) {
-		this.springSessionConversionService = conversionService;
-	}
+//	private GenericConversionService createConversionServiceWithBeanClassLoader() {
+//		GenericConversionService conversionService = new GenericConversionService();
+//		conversionService.addConverter(Object.class, byte[].class,
+//				new SerializingConverter());
+//		conversionService.addConverter(byte[].class, Object.class,
+//				new DeserializingConverter(this.classLoader));
+//		return conversionService;
+//	}
+//
+//	/* (non-Javadoc)
+//	 * @see org.springframework.beans.factory.BeanClassLoaderAware#setBeanClassLoader(java.lang.ClassLoader)
+//	 */
+//	public void setBeanClassLoader(ClassLoader classLoader) {
+//		this.classLoader = classLoader;
+//	}
+//
+//	@Autowired(required = false)
+//	@Qualifier("springSessionConversionService")
+//	public void setSpringSessionConversionService(ConversionService conversionService) {
+//		this.springSessionConversionService = conversionService;
+//	}
 
 	public void setLabel(String label) {
 		this.label = label;
@@ -151,22 +141,22 @@ public class OgmHttpSessionConfiguration extends SpringHttpSessionConfiguration
 		return ClassUtils.hasConstructor(DeserializingConverter.class, ClassLoader.class);
 	}
 
-	public void setImportMetadata(AnnotationMetadata importMetadata) {
-		Map<String, Object> enableAttrMap = importMetadata
-				.getAnnotationAttributes(EnableOgmHttpSession.class.getName());
-		AnnotationAttributes enableAttrs = AnnotationAttributes.fromMap(enableAttrMap);
-		String labelValue = enableAttrs.getString("label");
-		if (StringUtils.hasText(labelValue)) {
-			this.label = this.embeddedValueResolver
-					.resolveStringValue(labelValue);
-		}
-		this.maxInactiveIntervalInSeconds = enableAttrs
-				.getNumber("maxInactiveIntervalInSeconds");
-	}
-
-	public void setEmbeddedValueResolver(StringValueResolver resolver) {
-		this.embeddedValueResolver = resolver;
-	}
+//	public void setImportMetadata(AnnotationMetadata importMetadata) {
+//		Map<String, Object> enableAttrMap = importMetadata
+//				.getAnnotationAttributes(EnableOgmHttpSession.class.getName());
+//		AnnotationAttributes enableAttrs = AnnotationAttributes.fromMap(enableAttrMap);
+//		String labelValue = enableAttrs.getString("label");
+//		if (StringUtils.hasText(labelValue)) {
+//			this.label = this.embeddedValueResolver
+//					.resolveStringValue(labelValue);
+//		}
+//		this.maxInactiveIntervalInSeconds = enableAttrs
+//				.getNumber("maxInactiveIntervalInSeconds");
+//	}
+//
+//	public void setEmbeddedValueResolver(StringValueResolver resolver) {
+//		this.embeddedValueResolver = resolver;
+//	}
 
 	/**
 	 * Property placeholder to process the @Scheduled annotation.
