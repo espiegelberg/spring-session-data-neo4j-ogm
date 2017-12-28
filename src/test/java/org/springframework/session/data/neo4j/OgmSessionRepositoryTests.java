@@ -16,14 +16,14 @@
 package org.springframework.session.data.neo4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
-import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -391,9 +391,7 @@ public class OgmSessionRepositoryTests {
 		
 		given(this.sessionFactory.openSession()).willReturn(session);		
 		given(session.beginTransaction()).willReturn(transaction);
-		
-		//return now.minus(this.maxInactiveInterval).compareTo(this.lastAccessedTime) >= 0;
-		
+
 		NodeModel nodeModel = new NodeModel();
 		Map<String, Object> properties = new HashMap<>();
 		long now = new Date().getTime();
@@ -428,17 +426,30 @@ public class OgmSessionRepositoryTests {
 		
 	}
 
+	@Test
+	public void delete() {
+		
+		given(this.sessionFactory.openSession()).willReturn(session);		
+		given(session.beginTransaction()).willReturn(transaction);
 
-//	@Test
-//	public void delete() {
-//		String sessionId = "testSessionId";
-//
-//		this.repository.deleteById(sessionId);
-//
-//		
-//		verify(this.sessionFactory, times(1)).update(startsWith("DELETE"), eq(sessionId));
-//	}
-//
+		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
+		queryStatisticsModel.setNodes_deleted(1);
+		List<Map<String, Object>> r = new ArrayList<>();
+		Result result = new QueryResultModel(r, queryStatisticsModel);
+		given(this.session.query(isA(String.class), isA(Map.class))).willReturn(result);
+
+		String sessionId = "testSessionId";
+		this.repository.delete(sessionId);
+		
+		//verify(this.sessionFactory, times(1)).update(startsWith("DELETE"), eq(sessionId));
+		
+		verify(this.sessionFactory, times(1)).openSession(); 
+		verify(this.session, times(1)).beginTransaction();
+		verify(this.transaction, times(1)).commit();
+		verify(this.transaction, times(1)).close();
+		
+	}
+
 //	@Test
 //	public void findByIndexNameAndIndexValueUnknownIndexName() {
 //		String indexValue = "testIndexValue";
@@ -495,89 +506,28 @@ public class OgmSessionRepositoryTests {
 //				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class));
 //	}
 
-//	@Test
-//	public void cleanupExpiredSessions() {
-//		this.repository.cleanUpExpiredSessions();
-//
-//		//
-//		verify(this.sessionFactory, times(1)).update(startsWith("DELETE"), anyLong());
-//	}
+	@Test
+	public void cleanupExpiredSessions() {
 
-//	@Test
-//	public void primative() {
-//
-//		Object value = Integer.parseInt("1");
-//		boolean suppored = isNeo4jSupportedType(value);
-//		Assert.assertTrue(suppored);
-//		
-//		value = new Long(2).longValue();
-//		suppored = isNeo4jSupportedType(value);
-//		Assert.assertTrue(suppored);
-//		
-//		value = Float.parseFloat("1.0");
-//		suppored = isNeo4jSupportedType(value);
-//		Assert.assertTrue(suppored);
-//		
-//		value = Double.parseDouble("1.0");
-//		suppored = isNeo4jSupportedType(value);
-//		Assert.assertTrue(suppored);
-//		
-//		value = new Boolean(true).booleanValue();
-//		suppored = isNeo4jSupportedType(value);
-//		Assert.assertTrue(suppored);
-//		
-//		value = new byte['a'];
-//		suppored = isNeo4jSupportedType(value);
-//		Assert.assertTrue(suppored);
-//		
-//		value = "test".getBytes();
-//		suppored = isNeo4jSupportedType(value);
-//		Assert.assertTrue(suppored);
-//		
-//		value = new Boolean[] { true, false };
-//		suppored = isNeo4jSupportedType(value);
-//		Assert.assertTrue(suppored);
-//		
-//		value = "Test";
-//		suppored = isNeo4jSupportedType(value);
-//		Assert.assertTrue(suppored);
-//		
-//		value = new String[] { "Test1", "Test2" };
-//		suppored = isNeo4jSupportedType(value);
-//		Assert.assertTrue(suppored);
-//		
-//	}
-//	
-//	/**
-//	 * Property values in Neo4j could be either Java primitive types (float, double, int, boolean, byte,... ), Strings or array of both.
-//	 * 
-//	 * @param o The object to evaluate.
-//	 * @return boolean true if the object is a Neo4j supported data type otherwise false.
-//	 */
-//	protected boolean isNeo4jSupportedType(Object o) {
-//	
-//		Class<?> clazz = o.getClass();
-//		boolean supported = ClassUtils.isPrimitiveOrWrapper(clazz);
-//		
-//		if (!supported) {
-//			supported = ClassUtils.isPrimitiveWrapperArray(clazz);	
-//		}
-//
-//		if (!supported) {
-//			supported = o instanceof byte[];	
-//		}
-//		
-//		if (!supported) {
-//			supported = o instanceof String;	
-//		}
-//		
-//		if (!supported) {
-//			supported = o instanceof String[];	
-//		}
-//		
-//		return supported;
-//		
-//	}
-	
-	
+		given(this.sessionFactory.openSession()).willReturn(session);		
+		given(session.beginTransaction()).willReturn(transaction);
+
+		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
+		queryStatisticsModel.setNodes_deleted(1);
+		List<Map<String, Object>> r = new ArrayList<>();
+		Result result = new QueryResultModel(r, queryStatisticsModel);
+		given(this.session.query(isA(String.class), isA(Map.class))).willReturn(result);
+		
+		this.repository.cleanUpExpiredSessions();
+
+		verify(this.sessionFactory, times(1)).openSession(); 
+		verify(this.session, times(1)).beginTransaction();
+		verify(this.transaction, times(1)).commit();
+		verify(this.transaction, times(1)).close();
+		
+		String expectedQuery = OgmSessionRepository.DELETE_SESSIONS_BY_LAST_ACCESS_TIME_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
+		
+	}
+
 }

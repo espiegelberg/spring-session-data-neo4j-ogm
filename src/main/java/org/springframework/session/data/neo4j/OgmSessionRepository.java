@@ -76,19 +76,19 @@ public class OgmSessionRepository implements
 	 */
 	public static final String DEFAULT_LABEL = "SPRING_SESSION";
 	
-	private static final String SPRING_SECURITY_CONTEXT = "SPRING_SECURITY_CONTEXT";
+	public static final String SPRING_SECURITY_CONTEXT = "SPRING_SECURITY_CONTEXT";
 
-	private static final String CREATE_SESSION_QUERY = "create (n:%LABEL% {nodeProperties})";
+	public static final String CREATE_SESSION_QUERY = "create (n:%LABEL% {nodeProperties})";
 
-	private static final String GET_SESSION_QUERY = "match (n:%LABEL%) where n.sessionId={sessionId} return n order by n.creationTime desc";
+	public static final String GET_SESSION_QUERY = "match (n:%LABEL%) where n.sessionId={sessionId} return n order by n.creationTime desc";
 	
-	private static final String UPDATE_SESSION_QUERY = "match (n:%LABEL%) where n.sessionId={sessionId} set %PROPERTIES_TO_UPDATE%";
+	public static final String UPDATE_SESSION_QUERY = "match (n:%LABEL%) where n.sessionId={sessionId} set %PROPERTIES_TO_UPDATE%";
 	
-	private static final String DELETE_SESSION_QUERY = "match (n:%LABEL%) where n.sessionId={sessionId} detach delete n";
+	public static final String DELETE_SESSION_QUERY = "match (n:%LABEL%) where n.sessionId={sessionId} detach delete n";
 	
-	private static final String LIST_SESSIONS_BY_PRINCIPAL_NAME_QUERY = "match (n:%LABEL%) where n.principalName={principalName} return n order by n.creationTime desc";
+	public static final String LIST_SESSIONS_BY_PRINCIPAL_NAME_QUERY = "match (n:%LABEL%) where n.principalName={principalName} return n order by n.creationTime desc";
 
-	private static final String DELETE_SESSIONS_BY_LAST_ACCESS_TIME_QUERY = 
+	public static final String DELETE_SESSIONS_BY_LAST_ACCESS_TIME_QUERY = 
 			"match (n:%LABEL%) where n.maxInactiveInterval < ({now} - n.lastAccessedTime) detach delete n";
 
 	private static final Log logger = LogFactory.getLog(OgmSessionRepository.class);
