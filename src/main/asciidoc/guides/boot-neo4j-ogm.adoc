@@ -94,7 +94,7 @@ For example, you can include the following in your *application.properties*
 
 .src/main/resources/application.properties
 ----
-#spring.data.neo4j.uri=bolt://localhost:7687
+spring.data.neo4j.uri=bolt://localhost:7687
 spring.data.neo4j.username=neo4j
 spring.data.neo4j.password=change-me
 ----
@@ -152,7 +152,7 @@ Go ahead and view the cookies (click for help with https://developer.chrome.com/
 If you like, you can easily inspect the session using the Neo4j Browser. For example, open a browser and point to http://localhost:7474.
 
 Alternatively, you can also delete the explicit key. Enter the following into the Neo4j Browser ensuring to replace `60f17293-839b-477c-bb92-07a9c3658843` with the value of your SESSION cookie:
-
+----
 match (n:SPRING_SESSION) where n.sessionId = '60f17293-839b-477c-bb92-07a9c3658843' delete n
-
+----
 Now visit the application at http://localhost:8080/ and observe that we are no longer authenticated.
