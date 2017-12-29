@@ -17,13 +17,14 @@ package org.springframework.session.data.neo4j.config.annotation.web.http;
 
 import java.util.Map;
 
-import javax.sql.DataSource;
-
 import org.neo4j.ogm.session.SessionFactory;
+import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.EmbeddedValueResolverAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ImportAware;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.convert.ConversionService;
@@ -39,14 +40,13 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.util.StringValueResolver;
 
-// TODO: Update JavaDoc
 /**
- * Spring @Configuration class used to configure and initialize a JDBC based HttpSession
+ * Spring @Configuration class used to configure and initialize a Neo4j based HttpSession
  * provider implementation in Spring Session.
  * <p>
  * Exposes the {@link org.springframework.session.web.http.SessionRepositoryFilter} as a
  * bean named "springSessionRepositoryFilter". In order to use this a single
- * {@link DataSource} must be exposed as a Bean.
+ * {@link SessionFactory} must be exposed as a Bean.
  *
  * @author Eric Spiegelberg
  * @author Vedran Pavic
@@ -56,8 +56,8 @@ import org.springframework.util.StringValueResolver;
  */
 @Configuration
 @EnableScheduling
-public class OgmHttpSessionConfiguration extends SpringHttpSessionConfiguration {
-		//implements BeanClassLoaderAware, ImportAware, EmbeddedValueResolverAware {
+public class OgmHttpSessionConfiguration extends SpringHttpSessionConfiguration
+		implements BeanClassLoaderAware, ImportAware, EmbeddedValueResolverAware {
 
 	private String label;
 
