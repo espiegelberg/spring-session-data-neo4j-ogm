@@ -246,7 +246,7 @@ public class OgmSessionRepository implements
 				Optional<Object> attributeValue = session.getAttribute(attributeName);
 
 				if (attributeValue.isPresent()) {
-					// TODO performance: Serialize the attributeValue only if it is not a native Neo4j type
+// TODO performance: Serialize the attributeValue only if it is not a native Neo4j type?
 					String key = ATTRIBUTE_KEY_PREFIX + attributeName;
 					Object value = attributeValue.get();
 					byte attributeValueAsBytes[] = serialize(value);
@@ -269,7 +269,7 @@ public class OgmSessionRepository implements
 	
 			if (!delta.isEmpty()) {		
 				for (final Map.Entry<String, Object> entry : delta.entrySet()) {
-// TODO performance: Serialize the attributeValue only if it is not a native Neo4j type
+// TODO performance: Serialize the attributeValue only if it is not a native Neo4j type?
 					String key = ATTRIBUTE_KEY_PREFIX + entry.getKey();
 					Object value = entry.getValue();
 					byte attributeValueAsBytes[] = serialize(value);
@@ -347,6 +347,7 @@ public class OgmSessionRepository implements
 					if (attributeName.startsWith(ATTRIBUTE_KEY_PREFIX)) { // Strip the ATTRIBUTE_KEY_PREFIX
 						attributeName = attributeName.substring(10);
 						byte bytes[] = (byte[]) property.getValue();
+// TODO performance: Deserialize the attributeValue only if it is not a native Neo4j type?
 						Object attributeValue = deserialize(bytes);
 						session.setAttribute(attributeName, attributeValue);
 					}				
