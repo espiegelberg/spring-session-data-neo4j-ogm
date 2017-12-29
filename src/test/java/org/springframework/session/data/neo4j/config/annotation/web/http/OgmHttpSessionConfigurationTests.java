@@ -19,13 +19,13 @@ package org.springframework.session.data.neo4j.config.annotation.web.http;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
-import javax.sql.DataSource;
-
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.neo4j.ogm.session.SessionFactory;
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -64,13 +64,13 @@ public class OgmHttpSessionConfigurationTests {
 	}
 
 	@Test
-	public void noDataSourceConfiguration() {
+	public void noSessionFactoryConfiguration() {
 		this.thrown.expect(UnsatisfiedDependencyException.class);
-		this.thrown.expectMessage("springSessionOgmOperations");
+		this.thrown.expectMessage("sessionRepository");
 
 		registerAndRefresh(EmptyConfiguration.class);
 	}
-
+	
 	@Test
 	public void defaultConfiguration() {
 		registerAndRefresh(DefaultConfiguration.class);
@@ -179,10 +179,11 @@ public class OgmHttpSessionConfigurationTests {
 	}
 
 	static class BaseConfiguration {
-
+		
 		@Bean
-		public DataSource dataSource() {
-			return mock(DataSource.class);
+		@Qualifier("springSessionOgmSessionFactory")
+		public SessionFactory sessionFactory() {
+			return mock(SessionFactory.class);
 		}
 
 	}
