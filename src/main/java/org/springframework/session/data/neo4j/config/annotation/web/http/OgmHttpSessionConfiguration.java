@@ -48,6 +48,7 @@ import org.springframework.util.StringValueResolver;
  * bean named "springSessionRepositoryFilter". In order to use this a single
  * {@link DataSource} must be exposed as a Bean.
  *
+ * @author Eric Spiegelberg
  * @author Vedran Pavic
  * @author Eddú Meléndez
  * @since 1.2.0
@@ -61,9 +62,6 @@ public class OgmHttpSessionConfiguration extends SpringHttpSessionConfiguration 
 	private String label;
 
 	private Integer maxInactiveIntervalInSeconds;
-
-	@Autowired
-	protected SessionFactory sessionFactory;
 	
 	@Autowired(required = false)
 	@Qualifier("conversionService")
