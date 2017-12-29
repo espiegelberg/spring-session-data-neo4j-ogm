@@ -21,8 +21,10 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
@@ -237,36 +239,24 @@ public class OgmSessionRepositoryTests {
 		verifyZeroInteractions(this.sessionFactory);
 	}
 
-//	@Test
-//	public void saveNewWithoutAttributes() {
-//		OgmSessionRepository.OgmSession session = this.repository
-//				.createSession();
-//
-//		this.repository.save(session);
-//
-//		assertThat(session.isNew()).isFalse();
-//		assertPropagationRequiresNew();
-//		verify(this.session, times(1)).update(startsWith("INSERT"),
-//				isA(PreparedStatementSetter.class));
-//		verifyNoMoreInteractions(this.session);
-//	}
-//
-//	@Test
-//	public void saveNewWithAttributes() {
-//		OgmSessionRepository.OgmSession session = this.repository
-//				.createSession();
-//		session.setAttribute("testName", "testValue");
-//
-//		this.repository.save(session);
-//
-//		assertThat(session.isNew()).isFalse();
-//		assertPropagationRequiresNew();
-//		verify(this.session, times(1)).update(startsWith("INSERT"),
-//				isA(PreparedStatementSetter.class));
-//		verify(this.session, times(1)).batchUpdate(
-//				and(startsWith("INSERT"), contains("ATTRIBUTE_BYTES")),
-//				isA(BatchPreparedStatementSetter.class));
-//	}
+	@Test
+	public void saveNewWithoutAttributes() {
+		given(this.sessionFactory.openSession()).willReturn(session);		
+		given(session.beginTransaction()).willReturn(transaction);
+
+		OgmSessionRepository.OgmSession session = this.repository
+				.createSession();
+
+		this.repository.save(session);
+
+		assertThat(session.isNew()).isFalse();
+		assertThat(session).isNotNull();
+		verify(this.sessionFactory, times(1)).openSession(); 
+		verify(this.session, times(1)).beginTransaction();
+		verify(this.transaction, times(1)).commit();
+		verify(this.transaction, times(1)).close();
+		verifyNoMoreInteractions(this.sessionFactory);
+	}
 
 	@Test
 	public void saveNewWithAttributes() {		
@@ -288,26 +278,57 @@ public class OgmSessionRepositoryTests {
 		verify(this.session, times(1)).beginTransaction();
 		verify(this.transaction, times(1)).commit();
 		verify(this.transaction, times(1)).close();
+		verifyNoMoreInteractions(this.sessionFactory);
 		
 		String expectedQuery = OgmSessionRepository.CREATE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
 		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));		
 	}
 
-//	@Test
-//	public void saveUpdatedAttributes() {
-//		OgmSessionRepository.OgmSession session = this.repository.new JdbcSession(
-//				new MapSession());
-//		session.setAttribute("testName", "testValue");
-//
-//		this.repository.save(session);
-//
-//		assertThat(session.isNew()).isFalse();
-//		
-//		verify(this.sessionFactory, times(1)).update(
-//				and(startsWith("UPDATE"), contains("ATTRIBUTE_BYTES")),
-//				isA(PreparedStatementSetter.class));
-//	}
-//
+	@Test
+	public void saveUpdatedAttributes() {
+		
+		given(this.sessionFactory.openSession()).willReturn(session);		
+		given(session.beginTransaction()).willReturn(transaction);
+		
+		List<Map<String, Object>> r = new ArrayList<>();
+		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
+		Result result = new QueryResultModel(r, queryStatisticsModel);
+		given(this.session.query(isA(String.class), isA(Map.class))).willReturn(result);
+		
+		
+		OgmSessionRepository.OgmSession session = this.repository
+				.createSession();
+		
+		session.setAttribute("testName", "testValue");
+
+		this.repository.save(session);
+
+		assertThat(session.isNew()).isFalse();
+
+		String expectedQuery = OgmSessionRepository.CREATE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
+		verify(this.sessionFactory, times(1)).openSession(); 
+		verify(this.session, times(1)).beginTransaction();
+		verify(this.transaction, times(1)).commit();
+		verify(this.transaction, times(1)).close();
+		verifyNoMoreInteractions(this.sessionFactory);
+		
+		session.setAttribute("testName", "testValue2");
+
+		this.repository.save(session);
+		
+		assertThat(session).isNotNull();
+		verify(this.sessionFactory, times(2)).openSession(); 
+		verify(this.session, times(2)).beginTransaction();
+		verify(this.transaction, times(2)).commit();
+		verify(this.transaction, times(2)).close();
+		verifyNoMoreInteractions(this.sessionFactory);
+		
+		expectedQuery = "match (n:SPRING_SESSION) where n.sessionId={sessionId} set n.lastAccessedTime={lastAccessedTime},n.attribute_testName={attribute_testName},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval}";
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
+		
+	}
+
 //	@Test
 //	public void saveUpdatedLastAccessedTime() {
 //		OgmSessionRepository.OgmSession session = this.repository.new JdbcSession(
@@ -355,6 +376,7 @@ public class OgmSessionRepositoryTests {
 		verify(this.session, times(1)).beginTransaction();
 		verify(this.transaction, times(1)).commit();
 		verify(this.transaction, times(1)).close();
+		verifyNoMoreInteractions(this.sessionFactory);
 	}
 
 	@Test
@@ -404,7 +426,7 @@ public class OgmSessionRepositoryTests {
 		verify(this.session, times(1)).beginTransaction();
 		verify(this.transaction, times(1)).commit();
 		verify(this.transaction, times(1)).close();
-		
+		verifyNoMoreInteractions(this.sessionFactory);
 	}
 	
 	@Test
@@ -449,7 +471,7 @@ public class OgmSessionRepositoryTests {
 		verify(this.session, times(2)).beginTransaction();
 		verify(this.transaction, times(2)).commit();
 		verify(this.transaction, times(2)).close();
-		
+		verifyNoMoreInteractions(this.sessionFactory);
 	}
 
 	@Test
@@ -473,7 +495,7 @@ public class OgmSessionRepositoryTests {
 		verify(this.session, times(1)).beginTransaction();
 		verify(this.transaction, times(1)).commit();
 		verify(this.transaction, times(1)).close();
-		
+		verifyNoMoreInteractions(this.sessionFactory);
 	}
 
 //	@Test
@@ -550,10 +572,10 @@ public class OgmSessionRepositoryTests {
 		verify(this.session, times(1)).beginTransaction();
 		verify(this.transaction, times(1)).commit();
 		verify(this.transaction, times(1)).close();
+		verifyNoMoreInteractions(this.sessionFactory);
 		
 		String expectedQuery = OgmSessionRepository.DELETE_SESSIONS_BY_LAST_ACCESS_TIME_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
-		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
-		
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));		
 	}
 
 }
