@@ -246,21 +246,13 @@ public class OgmSessionRepository implements
 				Optional<Object> attributeValue = session.getAttribute(attributeName);
 
 				if (attributeValue.isPresent()) {
-					
+					// TODO performance: Serialize the attributeValue only if it is not a native Neo4j type
 					String key = ATTRIBUTE_KEY_PREFIX + attributeName;
 					Object value = attributeValue.get();
-					
-					boolean isNeo4jSupportedType = isNeo4jSupportedType(value);
-					
-					if (isNeo4jSupportedType) {
-						nodeProperties.put(key, value);
-					} else {					
-						byte attributeValueAsBytes[] = serialize(value);
-						nodeProperties.put(key, attributeValueAsBytes);
-					}
-
+					byte attributeValueAsBytes[] = serialize(value);
+					nodeProperties.put(key, attributeValueAsBytes);
 				}
-				
+
 			}
 
 			executeCypher(createSessionQuery, parameters);
@@ -277,19 +269,11 @@ public class OgmSessionRepository implements
 	
 			if (!delta.isEmpty()) {		
 				for (final Map.Entry<String, Object> entry : delta.entrySet()) {
-
+// TODO performance: Serialize the attributeValue only if it is not a native Neo4j type
 					String key = ATTRIBUTE_KEY_PREFIX + entry.getKey();
 					Object value = entry.getValue();
-
-					boolean isNeo4jSupportedType = isNeo4jSupportedType(value);
-					
-					if (isNeo4jSupportedType) {
-						parameters.put(key, value);
-					} else {					
-						byte attributeValueAsBytes[] = serialize(value);
-						parameters.put(key, attributeValueAsBytes);
-					}
-					
+					byte attributeValueAsBytes[] = serialize(value);
+					parameters.put(key, attributeValueAsBytes);
 				}
 
 			}
@@ -360,17 +344,10 @@ public class OgmSessionRepository implements
 				List<Property<String, Object>> propertyList = nodeModel.getPropertyList();			
 				for (Property<String, Object> property : propertyList) {
 					String attributeName = property.getKey();
-					if (attributeName.startsWith(ATTRIBUTE_KEY_PREFIX)) {
-
-						attributeName = attributeName.substring(10); // Strip the ATTRIBUTE_KEY_PREFIX						
-						Object attributeValue = property.getValue();
-
-						boolean isNeo4jSupportedType = isNeo4jSupportedType(attributeValue);
-						if (!isNeo4jSupportedType) {
-							byte bytes[] = (byte[]) property.getValue();
-							attributeValue = deserialize(bytes);						
-						}
-						
+					if (attributeName.startsWith(ATTRIBUTE_KEY_PREFIX)) { // Strip the ATTRIBUTE_KEY_PREFIX
+						attributeName = attributeName.substring(10);
+						byte bytes[] = (byte[]) property.getValue();
+						Object attributeValue = deserialize(bytes);
 						session.setAttribute(attributeName, attributeValue);
 					}				
 				}
