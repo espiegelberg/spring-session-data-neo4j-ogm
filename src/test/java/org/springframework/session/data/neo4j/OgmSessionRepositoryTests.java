@@ -267,7 +267,32 @@ public class OgmSessionRepositoryTests {
 //				and(startsWith("INSERT"), contains("ATTRIBUTE_BYTES")),
 //				isA(BatchPreparedStatementSetter.class));
 //	}
-//
+
+	@Test
+	public void saveNewWithAttributes() {		
+		given(this.sessionFactory.openSession()).willReturn(session);		
+		given(session.beginTransaction()).willReturn(transaction);
+		
+		OgmSessionRepository.OgmSession session = this.repository
+				.createSession();
+		session.setAttribute("testName", "testValue");
+
+		assertThat(session.isNew()).isTrue();
+		
+		this.repository.save(session);
+
+		assertThat(session.isNew()).isFalse();
+
+		assertThat(session).isNotNull();
+		verify(this.sessionFactory, times(1)).openSession(); 
+		verify(this.session, times(1)).beginTransaction();
+		verify(this.transaction, times(1)).commit();
+		verify(this.transaction, times(1)).close();
+		
+		String expectedQuery = OgmSessionRepository.CREATE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));		
+	}
+
 //	@Test
 //	public void saveUpdatedAttributes() {
 //		OgmSessionRepository.OgmSession session = this.repository.new JdbcSession(
@@ -277,7 +302,7 @@ public class OgmSessionRepositoryTests {
 //		this.repository.save(session);
 //
 //		assertThat(session.isNew()).isFalse();
-//		assertPropagationRequiresNew();
+//		
 //		verify(this.sessionFactory, times(1)).update(
 //				and(startsWith("UPDATE"), contains("ATTRIBUTE_BYTES")),
 //				isA(PreparedStatementSetter.class));
@@ -311,6 +336,7 @@ public class OgmSessionRepositoryTests {
 
 	@Test
 	public void getSessionNotFound() {
+
 		String sessionId = "testSessionId";
 
 		given(this.sessionFactory.openSession()).willReturn(session);		
@@ -348,7 +374,7 @@ public class OgmSessionRepositoryTests {
 		long now = new Date().getTime();
 		properties.put(OgmSessionRepository.CREATION_TIME, now);
 		properties.put(OgmSessionRepository.LAST_ACCESS_TIME, now);
-		properties.put(OgmSessionRepository.MAX_INACTIVE_INTERVAL, 999);		
+		properties.put(OgmSessionRepository.MAX_INACTIVE_INTERVAL, 30);		
 		byte attributeValueBytes[] = this.repository.serialize(attributeValue);
 		
 		properties.put(OgmSessionRepository.ATTRIBUTE_KEY_PREFIX + attributeName, attributeValueBytes);
