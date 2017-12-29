@@ -283,18 +283,17 @@ public class OgmSessionRepository implements
 			while (entries.hasNext()) {
 				Entry<String, Object> entry = entries.next();
 				String key = entry.getKey();
-				Object value = entry.getValue();
+				//Object value = entry.getValue();
 
-				if (value != null) {
-					stringBuilder.append("n.");
-					stringBuilder.append(key);
-					stringBuilder.append("={");					
-					stringBuilder.append(key);
-					stringBuilder.append("}");
-					if (entries.hasNext()) {
-						stringBuilder.append(",");
-					}
+				stringBuilder.append("n.");
+				stringBuilder.append(key);
+				stringBuilder.append("={");					
+				stringBuilder.append(key);
+				stringBuilder.append("}");
+				if (entries.hasNext()) {
+					stringBuilder.append(",");
 				}
+
 			}
 
 			String suffix = stringBuilder.toString();
