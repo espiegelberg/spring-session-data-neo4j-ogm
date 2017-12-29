@@ -47,7 +47,6 @@ import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.MapSession;
 import org.springframework.session.Session;
 import org.springframework.util.Assert;
-import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 // TODO: Update JavaDoc
@@ -620,37 +619,6 @@ public class OgmSessionRepository implements
 		} finally {
 			transaction.close();
 		}
-		
-	}
-	
-	/**
-	 * Neo4j natively supports values of either Java primitive types (float, double, int, boolean, byte,... ), Strings or an array of both.
-	 * 
-	 * @param o The object to evaluate.
-	 * @return boolean true if the object is a Neo4j supported data type otherwise false.
-	 */
-	protected boolean isNeo4jSupportedType(Object o) {
-	
-		Class<?> clazz = o.getClass();
-		boolean supported = ClassUtils.isPrimitiveOrWrapper(clazz);
-		
-		if (!supported) {
-			supported = ClassUtils.isPrimitiveWrapperArray(clazz);	
-		}
-
-		if (!supported) {
-			supported = o instanceof byte[];	
-		}
-		
-		if (!supported) {
-			supported = o instanceof String;	
-		}
-		
-		if (!supported) {
-			supported = o instanceof String[];	
-		}
-		
-		return supported;
 		
 	}
 	
