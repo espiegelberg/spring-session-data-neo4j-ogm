@@ -53,11 +53,11 @@ import org.springframework.util.StringUtils;
 // TODO: Update JavaDoc
 /**
  * A {@link org.springframework.session.SessionRepository} implementation that uses
- * Spring's {@link JdbcOperations} to store sessions in a relational database. This
+ * OGM's {@link SessionFactory} to store sessions in a OGM-based database. This
  * implementation does not support publishing of session events.
  * 
- * @author Vedran Pavic
  * @author Eric Spiegelberg
+ * @author Vedran Pavic
  */
 public class OgmSessionRepository implements
 		FindByIndexNameSessionRepository<OgmSessionRepository.OgmSession> {
