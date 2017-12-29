@@ -329,25 +329,44 @@ public class OgmSessionRepositoryTests {
 		
 	}
 
-//	@Test
-//	public void saveUpdatedLastAccessedTime() {
-//		OgmSessionRepository.OgmSession session = this.repository.new JdbcSession(
-//				new MapSession());
-//		session.setLastAccessedTime(Instant.now());
-//
-//		this.repository.save(session);
-//
-//		assertThat(session.isNew()).isFalse();
-//		
-//		verify(this.sessionFactory, times(1)).update(
-//				and(startsWith("UPDATE"), contains("LAST_ACCESS_TIME")),
-//				isA(PreparedStatementSetter.class));
-//	}
-//
+	@Test
+	public void saveUpdatedLastAccessedTime() {
+		
+		given(this.sessionFactory.openSession()).willReturn(session);		
+		given(session.beginTransaction()).willReturn(transaction);
+		
+		OgmSessionRepository.OgmSession session = this.repository
+				.createSession();
+		session.setLastAccessedTime(Instant.now());
+
+		this.repository.save(session);
+
+		assertThat(session.isNew()).isFalse();
+		assertThat(session).isNotNull();
+		verify(this.sessionFactory, times(1)).openSession(); 
+		verify(this.session, times(1)).beginTransaction();
+		verify(this.transaction, times(1)).commit();
+		verify(this.transaction, times(1)).close();
+		verifyNoMoreInteractions(this.sessionFactory);
+		
+		session.setAttribute("updated", true);
+		this.repository.save(session);
+	
+		assertThat(session).isNotNull();
+		verify(this.sessionFactory, times(2)).openSession(); 
+		verify(this.session, times(2)).beginTransaction();
+		verify(this.transaction, times(2)).commit();
+		verify(this.transaction, times(2)).close();
+		verifyNoMoreInteractions(this.sessionFactory);
+
+		String expectedQuery = "match (n:SPRING_SESSION) where n.sessionId={sessionId} set n.lastAccessedTime={lastAccessedTime},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval},n.attribute_updated={attribute_updated}";
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));		
+	}
+
 //	@Test
 //	public void saveUnchanged() {
-//		OgmSessionRepository.OgmSession session = this.repository.new JdbcSession(
-//				new MapSession());
+//		OgmSessionRepository.OgmSession session = this.repository
+//				.createSession();
 //
 //		this.repository.save(session);
 //
