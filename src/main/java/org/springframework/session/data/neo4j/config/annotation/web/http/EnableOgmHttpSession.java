@@ -33,24 +33,25 @@ import org.springframework.session.data.neo4j.OgmSessionRepository;
  * Add this annotation to an {@code @Configuration} class to expose the
  * SessionRepositoryFilter as a bean named "springSessionRepositoryFilter" and backed by a
  * relational database. In order to leverage the annotation, a single
- * {@link javax.sql.DataSource} must be provided. For example:
+ * {@link org.neo4j.ogm.session.SessionFactory} must be provided. For example:
  *
  * <pre class="code">
  * &#064;Configuration
  * &#064;EnableJdbcHttpSession
- * public class JdbcHttpSessionConfig {
+ * public class OgmHttpSessionConfig {
  *
+ *		&#064;Bean
+ *		public Configuration configureOgm() {
+ *			Configuration configuration = new Configuration.Builder().uri(neo4jUri).build();
+ *			this.configuration = configuration;
+ *	    	return configuration;
+ *	   }
+ *	
  *     &#064;Bean
- *     public DataSource dataSource() {
- *         return new EmbeddedDatabaseBuilder()
- *                 .setType(EmbeddedDatabaseType.H2)
- *                 .addScript("org/springframework/session/jdbc/schema-h2.sql")
- *                 .build();
- *     }
- *
- *     &#064;Bean
- *     public PlatformTransactionManager transactionManager(DataSource dataSource) {
- *         return new DataSourceTransactionManager(dataSource);
+ *     &#064;Qualifier("springSessionOgmSessionFactory")
+ *     public SessionFactory sessionFactory() {
+ *        SessionFactory sessionFactory = new SessionFactory(configuration, "com.my.domain");
+ *  	  return sessionFactory;
  *     }
  *
  * }
