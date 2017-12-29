@@ -3,7 +3,7 @@ image:https://travis-ci.org/spring-projects/spring-session-data-neo4j.svg?branch
 = Spring Session Neo4j OGM
 Eric Spiegelberg
 
-Spring Session Neo4j OGM provides a solution for Spring Session in a Neo4j data store.
+Spring Session Neo4j OGM provides a solution for Spring Session with a Neo4j data store.
 
 * Accessing a session from any environment (i.e. web, messaging infrastructure, etc)
 * In a web environment

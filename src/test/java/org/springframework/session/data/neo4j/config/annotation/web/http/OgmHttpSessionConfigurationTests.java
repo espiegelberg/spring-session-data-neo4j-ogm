@@ -110,17 +110,6 @@ public class OgmHttpSessionConfigurationTests {
 		}
 	}
 
-//	@Test
-//	public void setCustomTableName() {
-//		registerAndRefresh(BaseConfiguration.class,
-//				CustomTableNameSetConfiguration.class);
-//
-//		JdbcHttpSessionConfiguration repository = this.context
-//				.getBean(JdbcHttpSessionConfiguration.class);
-//		assertThat(repository).isNotNull();
-//		assertThat(ReflectionTestUtils.getField(repository, "tableName")).isEqualTo(
-//				"custom_session");
-//	}
 	@Test
 	public void setCustomLabelName() {
 		registerAndRefresh(BaseConfiguration.class,
@@ -155,19 +144,6 @@ public class OgmHttpSessionConfigurationTests {
 		assertThat(ReflectionTestUtils.getField(repository, "defaultMaxInactiveInterval"))
 				.isEqualTo(MAX_INACTIVE_INTERVAL_IN_SECONDS);
 	}
-
-//	@Test
-//	public void customLobHandlerConfiguration() {
-//		registerAndRefresh(CustomLobHandlerConfiguration.class);
-//
-//		OgmSessionRepository repository = this.context
-//				.getBean(OgmSessionRepository.class);
-//		LobHandler lobHandler = this.context.getBean(LobHandler.class);
-//		assertThat(repository).isNotNull();
-//		assertThat(lobHandler).isNotNull();
-//		assertThat(ReflectionTestUtils.getField(repository, "lobHandler"))
-//				.isEqualTo(lobHandler);
-//	}
 
 	@Test
 	public void customConversionServiceConfiguration() {
@@ -209,11 +185,6 @@ public class OgmHttpSessionConfigurationTests {
 			return mock(DataSource.class);
 		}
 
-//		@Bean
-//		public PlatformTransactionManager transactionManager() {
-//			return mock(PlatformTransactionManager.class);
-//		}
-
 	}
 
 	@Configuration
@@ -249,17 +220,6 @@ public class OgmHttpSessionConfigurationTests {
 	static class CustomMaxInactiveIntervalInSecondsConfiguration
 			extends BaseConfiguration {
 	}
-
-//	@Configuration
-//	@EnableOgmHttpSession
-//	static class CustomLobHandlerConfiguration extends BaseConfiguration {
-//
-//		@Bean
-//		public LobHandler springSessionLobHandler() {
-//			return mock(LobHandler.class);
-//		}
-//
-//	}
 
 	@Configuration
 	@EnableOgmHttpSession
