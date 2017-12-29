@@ -363,16 +363,37 @@ public class OgmSessionRepositoryTests {
 		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));		
 	}
 
-//	@Test
-//	public void saveUnchanged() {
-//		OgmSessionRepository.OgmSession session = this.repository
-//				.createSession();
-//
-//		this.repository.save(session);
-//
-//		assertThat(session.isNew()).isFalse();
-//		verifyZeroInteractions(this.sessionFactory);
-//	}
+	@Test
+	public void saveUnchanged() {
+		
+		given(this.sessionFactory.openSession()).willReturn(session);		
+		given(session.beginTransaction()).willReturn(transaction);
+		
+		OgmSessionRepository.OgmSession session = this.repository
+				.createSession();
+
+		this.repository.save(session);
+
+		assertThat(session.isNew()).isFalse();
+		assertThat(session).isNotNull();
+		verify(this.sessionFactory, times(1)).openSession(); 
+		verify(this.session, times(1)).beginTransaction();
+		verify(this.transaction, times(1)).commit();
+		verify(this.transaction, times(1)).close();
+		verifyNoMoreInteractions(this.sessionFactory);
+		
+		this.repository.save(session);
+		
+		assertThat(session.isNew()).isFalse();
+		assertThat(session).isNotNull();
+		verify(this.sessionFactory, times(2)).openSession(); 
+		verify(this.session, times(2)).beginTransaction();
+		verify(this.transaction, times(2)).commit();
+		verify(this.transaction, times(2)).close();
+		verifyNoMoreInteractions(this.sessionFactory);
+		
+		verifyZeroInteractions(this.sessionFactory);
+	}
 
 	@Test
 	public void getSessionNotFound() {
