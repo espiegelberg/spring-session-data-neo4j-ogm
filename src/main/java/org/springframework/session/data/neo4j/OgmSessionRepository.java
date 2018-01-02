@@ -49,7 +49,6 @@ import org.springframework.session.Session;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-// TODO: Update JavaDoc
 /**
  * A {@link org.springframework.session.SessionRepository} implementation that uses
  * OGM's {@link SessionFactory} to store sessions in a OGM-based database. This
