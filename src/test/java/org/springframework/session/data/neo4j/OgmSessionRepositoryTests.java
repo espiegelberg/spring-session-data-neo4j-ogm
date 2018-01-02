@@ -440,10 +440,11 @@ public class OgmSessionRepositoryTests {
 		long now = new Date().getTime();
 		properties.put(OgmSessionRepository.CREATION_TIME, now);
 		properties.put(OgmSessionRepository.LAST_ACCESS_TIME, now);
-		properties.put(OgmSessionRepository.MAX_INACTIVE_INTERVAL, 30);		
-		byte attributeValueBytes[] = this.repository.serialize(attributeValue);
+		properties.put(OgmSessionRepository.MAX_INACTIVE_INTERVAL, 30);
 		
-		properties.put(OgmSessionRepository.ATTRIBUTE_KEY_PREFIX + attributeName, attributeValueBytes);
+		byte attributeValueBytes[] = this.repository.serialize(attributeValue);		
+		properties.put(OgmSessionRepository.ATTRIBUTE_KEY_PREFIX + attributeName, attributeValueBytes);		
+//		properties.put(OgmSessionRepository.ATTRIBUTE_KEY_PREFIX + attributeName, attributeValue);
 		
 		nodeModel.setProperties(properties);
 		data.put("n", nodeModel);
