@@ -541,7 +541,8 @@ public class OgmSessionRepositoryTests {
 		verifyCounts(1);
 		verifyNoMoreInteractions(this.sessionFactory);
 		
-		//verify(this.sessionFactory, times(1)).update(startsWith("DELETE"), eq(sessionId));
+		String expectedQuery = OgmSessionRepository.DELETE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
 	}
 
 	@Test
@@ -577,6 +578,10 @@ public class OgmSessionRepositoryTests {
 
 		verifyCounts(1);
 		verifyNoMoreInteractions(this.sessionFactory);
+		
+		String expectedQuery = OgmSessionRepository.LIST_SESSIONS_BY_PRINCIPAL_NAME_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
+		
 	}
 
 	@Test
@@ -638,6 +643,9 @@ public class OgmSessionRepositoryTests {
 
 		verifyCounts(1);
 		verifyNoMoreInteractions(this.sessionFactory);
+		
+		String expectedQuery = OgmSessionRepository.LIST_SESSIONS_BY_PRINCIPAL_NAME_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
 	}
 
 	@Test
@@ -656,9 +664,9 @@ public class OgmSessionRepositoryTests {
 
 		verifyCounts(1);
 		verifyNoMoreInteractions(this.sessionFactory);
-		
+
 		String expectedQuery = OgmSessionRepository.DELETE_SESSIONS_BY_LAST_ACCESS_TIME_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
-		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));		
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
 	}
 
 	protected void verifyCounts(int count) {
