@@ -46,6 +46,10 @@ import org.neo4j.ogm.response.model.QueryStatisticsModel;
 import org.neo4j.ogm.session.Session;
 import org.neo4j.ogm.session.SessionFactory;
 import org.neo4j.ogm.transaction.Transaction;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.MapSession;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -502,16 +506,15 @@ public class OgmSessionRepositoryTests {
 		OgmSessionRepository.OgmSession session = this.repository
 				.getSession(expired.getId());
 
-		assertThat(session).isNull();
-
-		//verify(this.sessionFactory, times(1)).update(startsWith("DELETE"), eq(expired.getId()));
-		//verify(this.repository, times(1)).delete(expiredSession.getId());
-		
+		assertThat(session).isNull();		
 		verify(this.sessionFactory, times(2)).openSession(); 
 		verify(this.session, times(2)).beginTransaction();
 		verify(this.transaction, times(2)).commit();
 		verify(this.transaction, times(2)).close();
 		verifyNoMoreInteractions(this.sessionFactory);
+		
+//		//verify(this.sessionFactory, times(1)).update(startsWith("DELETE"), eq(expired.getId()));
+//		//verify(this.repository, times(1)).delete(expiredSession.getId());
 	}
 
 	@Test
@@ -529,8 +532,46 @@ public class OgmSessionRepositoryTests {
 		String sessionId = "testSessionId";
 		this.repository.delete(sessionId);
 		
-		//verify(this.sessionFactory, times(1)).update(startsWith("DELETE"), eq(sessionId));
+		verify(this.sessionFactory, times(1)).openSession(); 
+		verify(this.session, times(1)).beginTransaction();
+		verify(this.transaction, times(1)).commit();
+		verify(this.transaction, times(1)).close();
+		verifyNoMoreInteractions(this.sessionFactory);
 		
+		//verify(this.sessionFactory, times(1)).update(startsWith("DELETE"), eq(sessionId));
+	}
+
+	@Test
+	public void findByIndexNameAndIndexValueUnknownIndexName() {
+		String indexValue = "testIndexValue";
+
+		Map<String, OgmSessionRepository.OgmSession> sessions = this.repository
+				.findByIndexNameAndIndexValue("testIndexName", indexValue);
+
+		assertThat(sessions).isEmpty();
+		verifyZeroInteractions(this.sessionFactory);
+	}
+
+	@Test
+	public void findByIndexNameAndIndexValuePrincipalIndexNameNotFound() {
+		
+		given(this.sessionFactory.openSession()).willReturn(session);		
+		given(session.beginTransaction()).willReturn(transaction);
+		
+		List<Map<String, Object>> r = new ArrayList<>();
+		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
+		Result result = new QueryResultModel(r, queryStatisticsModel);
+		given(this.session.query(isA(String.class), isA(Map.class))).willReturn(result);
+		
+		String principal = "username";
+
+		Map<String, OgmSessionRepository.OgmSession> sessions = this.repository
+				.findByIndexNameAndIndexValue(
+						FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME,
+						principal);
+
+		assertThat(sessions).isEmpty();
+
 		verify(this.sessionFactory, times(1)).openSession(); 
 		verify(this.session, times(1)).beginTransaction();
 		verify(this.transaction, times(1)).commit();
@@ -538,61 +579,73 @@ public class OgmSessionRepositoryTests {
 		verifyNoMoreInteractions(this.sessionFactory);
 	}
 
-//	@Test
-//	public void findByIndexNameAndIndexValueUnknownIndexName() {
-//		String indexValue = "testIndexValue";
-//
-//		Map<String, OgmSessionRepository.OgmSession> sessions = this.repository
-//				.findByIndexNameAndIndexValue("testIndexName", indexValue);
-//
-//		assertThat(sessions).isEmpty();
-//		verifyZeroInteractions(this.sessionFactory);
-//	}
-//
-//	@Test
-//	public void findByIndexNameAndIndexValuePrincipalIndexNameNotFound() {
-//		String principal = "username";
-//		given(this.sessionFactory.query(isA(String.class),
-//				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class)))
-//				.willReturn(Collections.emptyList());
-//
-//		Map<String, OgmSessionRepository.OgmSession> sessions = this.repository
-//				.findByIndexNameAndIndexValue(
-//						FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME,
-//						principal);
-//
-//		assertThat(sessions).isEmpty();
-//		
-//		verify(this.sessionFactory, times(1)).query(isA(String.class),
-//				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class));
-//	}
-//
-//	@Test
-//	public void findByIndexNameAndIndexValuePrincipalIndexNameFound() {
-//		String principal = "username";
-//		Authentication authentication = new UsernamePasswordAuthenticationToken(principal,
-//				"notused", AuthorityUtils.createAuthorityList("ROLE_USER"));
-//		List<MapSession> saved = new ArrayList<>(2);
-//		MapSession saved1 = new MapSession();
-//		saved1.setAttribute(SPRING_SECURITY_CONTEXT, authentication);
-//		saved.add(saved1);
-//		MapSession saved2 = new MapSession();
-//		saved2.setAttribute(SPRING_SECURITY_CONTEXT, authentication);
-//		saved.add(saved2);
+	@Test
+	public void findByIndexNameAndIndexValuePrincipalIndexNameFound() {
+		
+		List<MapSession> saved = new ArrayList<>(2);
+		
+		String principal = "username";
+		Authentication authentication = new UsernamePasswordAuthenticationToken(principal,
+				"notused", AuthorityUtils.createAuthorityList("ROLE_USER"));
+		
+		MapSession saved1 = new MapSession();
+		saved1.setAttribute(SPRING_SECURITY_CONTEXT, authentication);
+		saved.add(saved1);
+		
+		MapSession saved2 = new MapSession();
+		saved2.setAttribute(SPRING_SECURITY_CONTEXT, authentication);
+		saved.add(saved2);
+		
 //		given(this.sessionFactory.query(isA(String.class),
 //				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class)))
 //				.willReturn(saved);
-//
-//		Map<String, OgmSessionRepository.OgmSession> sessions = this.repository
-//				.findByIndexNameAndIndexValue(
-//						FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME,
-//						principal);
-//
-//		assertThat(sessions).hasSize(2);
-//		
+
+		given(this.sessionFactory.openSession()).willReturn(session);		
+		given(session.beginTransaction()).willReturn(transaction);
+
+		Map<String, Object> data = new HashMap<>();
+		NodeModel nodeModel = new NodeModel();
+		Map<String, Object> properties = new HashMap<>();
+		long now = new Date().getTime();
+		properties.put(OgmSessionRepository.CREATION_TIME, now);
+		properties.put(OgmSessionRepository.LAST_ACCESS_TIME, now);
+		properties.put(OgmSessionRepository.MAX_INACTIVE_INTERVAL, 30);
+		
+//		byte attributeValueBytes[] = this.repository.serialize(attributeValue);		
+//		properties.put(OgmSessionRepository.ATTRIBUTE_KEY_PREFIX + attributeName, attributeValueBytes);		
+////		properties.put(OgmSessionRepository.ATTRIBUTE_KEY_PREFIX + attributeName, attributeValue);
+		
+		nodeModel.setProperties(properties);
+		data.put("n", nodeModel);
+		
+
+		//erics
+		List<Map<String, Object>> r = new ArrayList<>();
+		r.add(data);
+		
+		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
+		Result result = new QueryResultModel(r, queryStatisticsModel);
+		given(this.session.query(isA(String.class), isA(Map.class))).willReturn(result);
+
+		
+		//"match (n:%LABEL%) where n.principalName={principalName} return n order by n.creationTime desc";
+		
+		Map<String, OgmSessionRepository.OgmSession> sessions = this.repository
+				.findByIndexNameAndIndexValue(
+						FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME,
+						principal);
+
+		assertThat(sessions).hasSize(2);
+		
 //		verify(this.sessionFactory, times(1)).query(isA(String.class),
 //				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class));
-//	}
+		
+		verify(this.sessionFactory, times(1)).openSession(); 
+		verify(this.session, times(1)).beginTransaction();
+		verify(this.transaction, times(1)).commit();
+		verify(this.transaction, times(1)).close();
+		verifyNoMoreInteractions(this.sessionFactory);
+	}
 
 	@Test
 	public void cleanupExpiredSessions() {

@@ -324,7 +324,7 @@ public class OgmSessionRepository implements
 		
 			MapSession session = new MapSession(sessionId);
 			
-			long creationTime = (long) nodeModel.property(CREATION_TIME);			
+			long creationTime = ((Number) nodeModel.property(CREATION_TIME)).longValue();			
 			session.setCreationTime(Instant.ofEpochMilli(creationTime));
 
 			long lastAccessedTime = ((Number) nodeModel.property(LAST_ACCESS_TIME)).longValue();
@@ -394,13 +394,13 @@ public class OgmSessionRepository implements
 			String principalName = (String) nodeModel.property(PRINCIPAL_NAME);
 			//session.setPrincipalName(principalName);
 			
-			long creationTime = (long) nodeModel.property(CREATION_TIME);			
+			long creationTime = ((Number) nodeModel.property(CREATION_TIME)).longValue();			
 			session.setCreationTime(Instant.ofEpochMilli(creationTime));
 			
-			long lastAccessedTime = (long) nodeModel.property(LAST_ACCESS_TIME);
+			long lastAccessedTime = ((Number) nodeModel.property(LAST_ACCESS_TIME)).longValue();
 			session.setLastAccessedTime(Instant.ofEpochMilli(lastAccessedTime));
 			
-			long maxInactiveInterval = (long) nodeModel.property(MAX_INACTIVE_INTERVAL);
+			long maxInactiveInterval = ((Number) nodeModel.property(MAX_INACTIVE_INTERVAL)).longValue();
 			session.setMaxInactiveInterval(Duration.ofMillis(maxInactiveInterval));
 			
 			List<Property<String, Object>> propertyList = nodeModel.getPropertyList();
