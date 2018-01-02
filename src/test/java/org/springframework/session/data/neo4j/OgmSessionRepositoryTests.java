@@ -328,7 +328,7 @@ public class OgmSessionRepositoryTests {
 		verify(this.transaction, times(2)).close();
 		verifyNoMoreInteractions(this.sessionFactory);
 		
-		expectedQuery = "match (n:SPRING_SESSION) where n.sessionId={sessionId} set n.lastAccessedTime={lastAccessedTime},n.attribute_testName={attribute_testName},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval}";
+		expectedQuery = "match (n:SPRING_SESSION) where n.sessionId={sessionId} set n.lastAccessedTime={lastAccessedTime},n.attribute_testName={attribute_testName},n.principalName={principalName},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval}";
 		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
 		
 	}
@@ -363,7 +363,7 @@ public class OgmSessionRepositoryTests {
 		verify(this.transaction, times(2)).close();
 		verifyNoMoreInteractions(this.sessionFactory);
 
-		String expectedQuery = "match (n:SPRING_SESSION) where n.sessionId={sessionId} set n.lastAccessedTime={lastAccessedTime},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval},n.attribute_updated={attribute_updated}";
+		String expectedQuery = "match (n:SPRING_SESSION) where n.sessionId={sessionId} set n.lastAccessedTime={lastAccessedTime},n.principalName={principalName},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval},n.attribute_updated={attribute_updated}";
 		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));		
 	}
 
