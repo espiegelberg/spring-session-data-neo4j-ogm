@@ -303,8 +303,7 @@ public class OgmSessionRepositoryTests {
 		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
 		Result result = new QueryResultModel(r, queryStatisticsModel);
 		given(this.session.query(isA(String.class), isA(Map.class))).willReturn(result);
-		
-		
+				
 		OgmSessionRepository.OgmSession session = this.repository
 				.createSession();
 		
@@ -328,10 +327,11 @@ public class OgmSessionRepositoryTests {
 		assertThat(session).isNotNull();
 		verifyCounts(2);
 		verifyNoMoreInteractions(this.sessionFactory);
-		
-		expectedQuery = "match (n:SPRING_SESSION) where n.sessionId={sessionId} set n.lastAccessedTime={lastAccessedTime},n.attribute_testName={attribute_testName},n.principalName={principalName},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval}";
+
+		expectedQuery = OgmSessionRepository.UPDATE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
+		expectedQuery = expectedQuery.replaceAll("%PROPERTIES_TO_UPDATE%", "n.lastAccessedTime={lastAccessedTime},n.attribute_testName={attribute_testName},n.principalName={principalName},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval}");
 		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
-		
+
 	}
 
 	@Test
