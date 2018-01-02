@@ -417,28 +417,30 @@ public class OgmSessionRepositoryTests {
 
 	@Test
 	public void getSessionFound() {
-		List<Map<String, Object>> r = new ArrayList<>();
-		String attributeName = "name";
-		String attributeValue = "Elizabeth";
+
+		String attributeName = "color";
+		String attributeValue = "blue";
 		
 		Map<String, Object> data = new HashMap<>();
 		NodeModel nodeModel = new NodeModel();
+		data.put("n", nodeModel);
+		
 		Map<String, Object> properties = new HashMap<>();
 		long now = new Date().getTime();
 		properties.put(OgmSessionRepository.CREATION_TIME, now);
-		properties.put(OgmSessionRepository.LAST_ACCESS_TIME, now);
-		properties.put(OgmSessionRepository.MAX_INACTIVE_INTERVAL, Integer.MAX_VALUE);
+		properties.put(OgmSessionRepository.LAST_ACCESS_TIME, now - 500);
+		properties.put(OgmSessionRepository.MAX_INACTIVE_INTERVAL, now - 162000);
 		
 		byte attributeValueBytes[] = this.repository.serialize(attributeValue);		
 		properties.put(OgmSessionRepository.ATTRIBUTE_KEY_PREFIX + attributeName, attributeValueBytes);		
-//		properties.put(OgmSessionRepository.ATTRIBUTE_KEY_PREFIX + attributeName, attributeValue);
-		
+
 		nodeModel.setProperties(properties);
-		data.put("n", nodeModel);
-		r.add(data);
+		
+		List<Map<String, Object>> resultData = new ArrayList<>();
+		resultData.add(data);
 		
 		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
-		Result result = new QueryResultModel(r, queryStatisticsModel);
+		Result result = new QueryResultModel(resultData, queryStatisticsModel);
 		given(this.session.query(isA(String.class), isA(Map.class))).willReturn(result);
 		
 		MapSession saved = new MapSession();
@@ -463,18 +465,17 @@ public class OgmSessionRepositoryTests {
 	
 	@Test
 	public void getSessionExpired() {
-		MapSession expired = new MapSession();		
+		MapSession expiredSession = new MapSession();		
 		long a = MapSession.DEFAULT_MAX_INACTIVE_INTERVAL_SECONDS + 1;
 		Instant b = Instant.now().minusSeconds(a);		
-		expired.setLastAccessedTime(b);
-		long c = b.toEpochMilli();
+		expiredSession.setLastAccessedTime(b);
 
 		NodeModel nodeModel = new NodeModel();
 		Map<String, Object> properties = new HashMap<>();
 		long now = new Date().getTime();
 		
-		properties.put(OgmSessionRepository.CREATION_TIME, 0L);
-		properties.put(OgmSessionRepository.LAST_ACCESS_TIME, 100L);
+		properties.put(OgmSessionRepository.CREATION_TIME, now); // TODO: Set reasonable values
+		properties.put(OgmSessionRepository.LAST_ACCESS_TIME, 0);
 		properties.put(OgmSessionRepository.MAX_INACTIVE_INTERVAL, 1);		
 		nodeModel.setProperties(properties);
 		
@@ -489,7 +490,7 @@ public class OgmSessionRepositoryTests {
 		given(this.session.query(isA(String.class), isA(Map.class))).willReturn(result);
 
 		OgmSessionRepository.OgmSession session = this.repository
-				.getSession(expired.getId());
+				.getSession(expiredSession.getId());
 
 		assertThat(session).isNull();		
 		verifyCounts(2);
