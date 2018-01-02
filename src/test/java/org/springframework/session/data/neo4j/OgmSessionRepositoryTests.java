@@ -426,6 +426,10 @@ public class OgmSessionRepositoryTests {
 		assertThat(session).isNull();
 		verifyCounts(1);
 		verifyNoMoreInteractions(this.sessionFactory);
+		
+		String expectedQuery = OgmSessionRepository.GET_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
+		
 	}
 
 	// TODO: This should run successfully on it's own (currently requires previous tests)
