@@ -260,6 +260,10 @@ public class OgmSessionRepositoryTests {
 		verify(this.transaction, times(1)).commit();
 		verify(this.transaction, times(1)).close();
 		verifyNoMoreInteractions(this.sessionFactory);
+
+		String expectedQuery = OgmSessionRepository.CREATE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);		
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
+
 	}
 
 	@Test
