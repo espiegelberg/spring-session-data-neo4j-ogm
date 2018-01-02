@@ -516,8 +516,11 @@ public class OgmSessionRepositoryTests {
 		verifyCounts(2);
 		verifyNoMoreInteractions(this.sessionFactory);
 		
-//		//verify(this.sessionFactory, times(1)).update(startsWith("DELETE"), eq(expired.getId()));
-//		//verify(this.repository, times(1)).delete(expiredSession.getId());
+		String expectedQuery = OgmSessionRepository.GET_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
+
+		expectedQuery = OgmSessionRepository.DELETE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
 	}
 
 	@Test
