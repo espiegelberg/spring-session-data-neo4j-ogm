@@ -353,6 +353,10 @@ public class OgmSessionRepositoryTests {
 		verifyCounts(1);
 		verifyNoMoreInteractions(this.sessionFactory);
 		
+		String expectedQuery = OgmSessionRepository.CREATE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
+		expectedQuery = expectedQuery.replaceAll("%PROPERTIES_TO_UPDATE%", "n.lastAccessedTime={lastAccessedTime},n.attribute_testName={attribute_testName},n.principalName={principalName},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval}");
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
+		
 		session.setAttribute("updated", true);
 		this.repository.save(session);
 
@@ -360,10 +364,13 @@ public class OgmSessionRepositoryTests {
 		verifyCounts(2);
 		verifyNoMoreInteractions(this.sessionFactory);
 
-		String expectedQuery = "match (n:SPRING_SESSION) where n.sessionId={sessionId} set n.lastAccessedTime={lastAccessedTime},n.principalName={principalName},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval},n.attribute_updated={attribute_updated}";
-		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));		
+		expectedQuery = OgmSessionRepository.UPDATE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
+		expectedQuery = expectedQuery.replaceAll("%PROPERTIES_TO_UPDATE%", "n.lastAccessedTime={lastAccessedTime},n.principalName={principalName},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval},n.attribute_updated={attribute_updated}");
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
+		
 	}
 
+	// TODO: Should saving an unchanged Session update the last access time? I think so
 	@Test
 	public void saveUnchanged() {
 		
