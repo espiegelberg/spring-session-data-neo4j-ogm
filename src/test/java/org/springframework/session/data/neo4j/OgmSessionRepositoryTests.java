@@ -603,43 +603,44 @@ public class OgmSessionRepositoryTests {
 		given(this.sessionFactory.openSession()).willReturn(session);		
 		given(session.beginTransaction()).willReturn(transaction);
 
-		Map<String, Object> data = new HashMap<>();
+		Map<String, Object> data1 = new HashMap<>();
 		NodeModel nodeModel = new NodeModel();
 		Map<String, Object> properties = new HashMap<>();
 		long now = new Date().getTime();
+		properties.put(OgmSessionRepository.SESSION_ID, "1");
 		properties.put(OgmSessionRepository.CREATION_TIME, now);
 		properties.put(OgmSessionRepository.LAST_ACCESS_TIME, now);
 		properties.put(OgmSessionRepository.MAX_INACTIVE_INTERVAL, 30);
-		
-//		byte attributeValueBytes[] = this.repository.serialize(attributeValue);		
-//		properties.put(OgmSessionRepository.ATTRIBUTE_KEY_PREFIX + attributeName, attributeValueBytes);		
-////		properties.put(OgmSessionRepository.ATTRIBUTE_KEY_PREFIX + attributeName, attributeValue);
-		
 		nodeModel.setProperties(properties);
-		data.put("n", nodeModel);
+		data1.put("n", nodeModel);
 		
+		Map<String, Object> data2 = new HashMap<>();
+		NodeModel nodeModel2 = new NodeModel();
+		Map<String, Object> properties2 = new HashMap<>();
+		long now2 = new Date().getTime();
+		properties2.put(OgmSessionRepository.SESSION_ID, "2");
+		properties2.put(OgmSessionRepository.CREATION_TIME, now2);
+		properties2.put(OgmSessionRepository.LAST_ACCESS_TIME, now2);
+		properties2.put(OgmSessionRepository.MAX_INACTIVE_INTERVAL, 30);
+		nodeModel2.setProperties(properties2);		
+		data2.put("n", nodeModel2);
 
 		//erics
 		List<Map<String, Object>> r = new ArrayList<>();
-		r.add(data);
+		r.add(data1);
+		r.add(data2);
 		
 		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
 		Result result = new QueryResultModel(r, queryStatisticsModel);
 		given(this.session.query(isA(String.class), isA(Map.class))).willReturn(result);
 
-		
-		//"match (n:%LABEL%) where n.principalName={principalName} return n order by n.creationTime desc";
-		
 		Map<String, OgmSessionRepository.OgmSession> sessions = this.repository
 				.findByIndexNameAndIndexValue(
 						FindByIndexNameSessionRepository.PRINCIPAL_NAME_INDEX_NAME,
 						principal);
 
 		assertThat(sessions).hasSize(2);
-		
-//		verify(this.sessionFactory, times(1)).query(isA(String.class),
-//				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class));
-		
+
 		verify(this.sessionFactory, times(1)).openSession(); 
 		verify(this.session, times(1)).beginTransaction();
 		verify(this.transaction, times(1)).commit();

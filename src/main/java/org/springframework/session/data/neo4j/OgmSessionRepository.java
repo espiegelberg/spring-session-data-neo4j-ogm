@@ -382,7 +382,7 @@ public class OgmSessionRepository implements
 		Iterator<Map<String, Object>> resultIterator = result.iterator();
 		
 		// TODO: DRY with getSession()
-		if (resultIterator.hasNext()) {
+		while (resultIterator.hasNext()) {
 			
 			Map<String, Object> r = resultIterator.next();			
 			NodeModel nodeModel = (NodeModel) r.get("n");
