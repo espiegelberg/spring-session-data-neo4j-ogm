@@ -65,9 +65,6 @@ public class OgmSessionRepositoryTests {
 
 	private static final String SPRING_SECURITY_CONTEXT = "SPRING_SECURITY_CONTEXT";
 
-	@Rule
-	public ExpectedException thrown = ExpectedException.none();
-
 	@Mock
 	private Session session;
 
@@ -78,6 +75,9 @@ public class OgmSessionRepositoryTests {
 	private SessionFactory sessionFactory;
 	
 	private OgmSessionRepository repository;
+	
+	@Rule
+	public ExpectedException thrown = ExpectedException.none();
 	
 	@Before
 	public void setUp() {
@@ -222,11 +222,15 @@ public class OgmSessionRepositoryTests {
 
 	@Test
 	public void createSessionDefaultMaxInactiveInterval() throws Exception {
+		
 		OgmSessionRepository.OgmSession session = this.repository.createSession();
 		
+		assertThat(session).isNotNull();
 		assertThat(session.isNew()).isTrue();
 		assertThat(session.getMaxInactiveInterval())
 				.isEqualTo(new MapSession().getMaxInactiveInterval());
+
+		verifyCounts(0);
 		verifyZeroInteractions(this.sessionFactory);
 	}
 
@@ -238,8 +242,11 @@ public class OgmSessionRepositoryTests {
 		OgmSessionRepository.OgmSession session = this.repository
 				.createSession();
 
+		assertThat(session).isNotNull();
 		assertThat(session.isNew()).isTrue();
 		assertThat(session.getMaxInactiveInterval()).isEqualTo(Duration.ofSeconds(interval));
+		
+		verifyCounts(0);
 		verifyZeroInteractions(this.sessionFactory);
 	}
 
@@ -253,17 +260,14 @@ public class OgmSessionRepositoryTests {
 
 		this.repository.save(session);
 
-		assertThat(session.isNew()).isFalse();
 		assertThat(session).isNotNull();
-		verify(this.sessionFactory, times(1)).openSession(); 
-		verify(this.session, times(1)).beginTransaction();
-		verify(this.transaction, times(1)).commit();
-		verify(this.transaction, times(1)).close();
-		verifyNoMoreInteractions(this.sessionFactory);
+		assertThat(session.isNew()).isFalse();
 
 		String expectedQuery = OgmSessionRepository.CREATE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);		
 		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
 
+		verifyCounts(1);
+		verifyNoMoreInteractions(this.sessionFactory);
 	}
 
 	@Test
@@ -279,17 +283,14 @@ public class OgmSessionRepositoryTests {
 		
 		this.repository.save(session);
 
+		assertThat(session).isNotNull();
 		assertThat(session.isNew()).isFalse();
 
-		assertThat(session).isNotNull();
-		verify(this.sessionFactory, times(1)).openSession(); 
-		verify(this.session, times(1)).beginTransaction();
-		verify(this.transaction, times(1)).commit();
-		verify(this.transaction, times(1)).close();
-		verifyNoMoreInteractions(this.sessionFactory);
-		
 		String expectedQuery = OgmSessionRepository.CREATE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
-		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));		
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
+		
+		verifyCounts(1);
+		verifyNoMoreInteractions(this.sessionFactory);
 	}
 
 	@Test
@@ -311,14 +312,13 @@ public class OgmSessionRepositoryTests {
 
 		this.repository.save(session);
 
+		assertThat(session).isNotNull();
 		assertThat(session.isNew()).isFalse();
 
 		String expectedQuery = OgmSessionRepository.CREATE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
 		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
-		verify(this.sessionFactory, times(1)).openSession(); 
-		verify(this.session, times(1)).beginTransaction();
-		verify(this.transaction, times(1)).commit();
-		verify(this.transaction, times(1)).close();
+		
+		verifyCounts(1);
 		verifyNoMoreInteractions(this.sessionFactory);
 		
 		session.setAttribute("testName", "testValue2");
@@ -326,10 +326,7 @@ public class OgmSessionRepositoryTests {
 		this.repository.save(session);
 		
 		assertThat(session).isNotNull();
-		verify(this.sessionFactory, times(2)).openSession(); 
-		verify(this.session, times(2)).beginTransaction();
-		verify(this.transaction, times(2)).commit();
-		verify(this.transaction, times(2)).close();
+		verifyCounts(2);
 		verifyNoMoreInteractions(this.sessionFactory);
 		
 		expectedQuery = "match (n:SPRING_SESSION) where n.sessionId={sessionId} set n.lastAccessedTime={lastAccessedTime},n.attribute_testName={attribute_testName},n.principalName={principalName},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval}";
@@ -347,24 +344,20 @@ public class OgmSessionRepositoryTests {
 				.createSession();
 		session.setLastAccessedTime(Instant.now());
 
-		this.repository.save(session);
-
-		assertThat(session.isNew()).isFalse();
 		assertThat(session).isNotNull();
-		verify(this.sessionFactory, times(1)).openSession(); 
-		verify(this.session, times(1)).beginTransaction();
-		verify(this.transaction, times(1)).commit();
-		verify(this.transaction, times(1)).close();
+		assertThat(session.isNew()).isTrue();
+		
+		this.repository.save(session);
+		
+		assertThat(session.isNew()).isFalse();		
+		verifyCounts(1);
 		verifyNoMoreInteractions(this.sessionFactory);
 		
 		session.setAttribute("updated", true);
 		this.repository.save(session);
-	
-		assertThat(session).isNotNull();
-		verify(this.sessionFactory, times(2)).openSession(); 
-		verify(this.session, times(2)).beginTransaction();
-		verify(this.transaction, times(2)).commit();
-		verify(this.transaction, times(2)).close();
+
+		assertThat(session.isNew()).isFalse();
+		verifyCounts(2);
 		verifyNoMoreInteractions(this.sessionFactory);
 
 		String expectedQuery = "match (n:SPRING_SESSION) where n.sessionId={sessionId} set n.lastAccessedTime={lastAccessedTime},n.principalName={principalName},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval},n.attribute_updated={attribute_updated}";
@@ -382,22 +375,16 @@ public class OgmSessionRepositoryTests {
 
 		this.repository.save(session);
 
-		assertThat(session.isNew()).isFalse();
 		assertThat(session).isNotNull();
-		verify(this.sessionFactory, times(1)).openSession(); 
-		verify(this.session, times(1)).beginTransaction();
-		verify(this.transaction, times(1)).commit();
-		verify(this.transaction, times(1)).close();
+		assertThat(session.isNew()).isFalse();
+		
+		verifyCounts(1);
 		verifyNoMoreInteractions(this.sessionFactory);
 		
 		this.repository.save(session);
 		
 		assertThat(session.isNew()).isFalse();
-		assertThat(session).isNotNull();
-		verify(this.sessionFactory, times(2)).openSession(); 
-		verify(this.session, times(2)).beginTransaction();
-		verify(this.transaction, times(2)).commit();
-		verify(this.transaction, times(2)).close();
+		verifyCounts(2);
 		verifyNoMoreInteractions(this.sessionFactory);
 		
 		verifyZeroInteractions(this.sessionFactory);
@@ -420,13 +407,11 @@ public class OgmSessionRepositoryTests {
 				.getSession(sessionId);
 
 		assertThat(session).isNull();
-		verify(this.sessionFactory, times(1)).openSession(); 
-		verify(this.session, times(1)).beginTransaction();
-		verify(this.transaction, times(1)).commit();
-		verify(this.transaction, times(1)).close();
+		verifyCounts(1);
 		verifyNoMoreInteractions(this.sessionFactory);
 	}
 
+	// TODO: This should run successfully on it's own (currently requires previous tests)
 	@Test
 	public void getSessionFound() {
 		
@@ -434,7 +419,6 @@ public class OgmSessionRepositoryTests {
 		given(session.beginTransaction()).willReturn(transaction);
 		
 		List<Map<String, Object>> r = new ArrayList<>();
-		
 		String attributeName = "name";
 		String attributeValue = "Elizabeth";
 		
@@ -471,10 +455,7 @@ public class OgmSessionRepositoryTests {
 
 		assertThat(session.<String>getAttribute(attributeName).orElse(null)).isEqualTo(attributeValue);
 		
-		verify(this.sessionFactory, times(1)).openSession(); 
-		verify(this.session, times(1)).beginTransaction();
-		verify(this.transaction, times(1)).commit();
-		verify(this.transaction, times(1)).close();
+		verifyCounts(1);
 		verifyNoMoreInteractions(this.sessionFactory);
 	}
 	
@@ -507,15 +488,11 @@ public class OgmSessionRepositoryTests {
 		Result result = new QueryResultModel(r, queryStatisticsModel);
 		given(this.session.query(isA(String.class), isA(Map.class))).willReturn(result);
 
-
 		OgmSessionRepository.OgmSession session = this.repository
 				.getSession(expired.getId());
 
 		assertThat(session).isNull();		
-		verify(this.sessionFactory, times(2)).openSession(); 
-		verify(this.session, times(2)).beginTransaction();
-		verify(this.transaction, times(2)).commit();
-		verify(this.transaction, times(2)).close();
+		verifyCounts(2);
 		verifyNoMoreInteractions(this.sessionFactory);
 		
 //		//verify(this.sessionFactory, times(1)).update(startsWith("DELETE"), eq(expired.getId()));
@@ -537,10 +514,7 @@ public class OgmSessionRepositoryTests {
 		String sessionId = "testSessionId";
 		this.repository.delete(sessionId);
 		
-		verify(this.sessionFactory, times(1)).openSession(); 
-		verify(this.session, times(1)).beginTransaction();
-		verify(this.transaction, times(1)).commit();
-		verify(this.transaction, times(1)).close();
+		verifyCounts(1);
 		verifyNoMoreInteractions(this.sessionFactory);
 		
 		//verify(this.sessionFactory, times(1)).update(startsWith("DELETE"), eq(sessionId));
@@ -577,10 +551,7 @@ public class OgmSessionRepositoryTests {
 
 		assertThat(sessions).isEmpty();
 
-		verify(this.sessionFactory, times(1)).openSession(); 
-		verify(this.session, times(1)).beginTransaction();
-		verify(this.transaction, times(1)).commit();
-		verify(this.transaction, times(1)).close();
+		verifyCounts(1);
 		verifyNoMoreInteractions(this.sessionFactory);
 	}
 
@@ -641,10 +612,7 @@ public class OgmSessionRepositoryTests {
 
 		assertThat(sessions).hasSize(2);
 
-		verify(this.sessionFactory, times(1)).openSession(); 
-		verify(this.session, times(1)).beginTransaction();
-		verify(this.transaction, times(1)).commit();
-		verify(this.transaction, times(1)).close();
+		verifyCounts(1);
 		verifyNoMoreInteractions(this.sessionFactory);
 	}
 
@@ -662,14 +630,18 @@ public class OgmSessionRepositoryTests {
 		
 		this.repository.cleanUpExpiredSessions();
 
-		verify(this.sessionFactory, times(1)).openSession(); 
-		verify(this.session, times(1)).beginTransaction();
-		verify(this.transaction, times(1)).commit();
-		verify(this.transaction, times(1)).close();
+		verifyCounts(1);
 		verifyNoMoreInteractions(this.sessionFactory);
 		
 		String expectedQuery = OgmSessionRepository.DELETE_SESSIONS_BY_LAST_ACCESS_TIME_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
 		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));		
+	}
+
+	protected void verifyCounts(int count) {
+		verify(this.transaction, times(count)).close();
+		verify(this.transaction, times(count)).commit();
+		verify(this.session, times(count)).beginTransaction();
+		verify(this.sessionFactory, times(count)).openSession();
 	}
 
 }
