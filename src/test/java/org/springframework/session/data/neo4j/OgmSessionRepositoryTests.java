@@ -82,6 +82,8 @@ public class OgmSessionRepositoryTests {
 	@Before
 	public void setUp() {
 		this.repository = new OgmSessionRepository(this.sessionFactory);
+		given(this.sessionFactory.openSession()).willReturn(session);		
+		given(session.beginTransaction()).willReturn(transaction);
 	}
 
 	@Test
@@ -252,8 +254,6 @@ public class OgmSessionRepositoryTests {
 
 	@Test
 	public void saveNewWithoutAttributes() {
-		given(this.sessionFactory.openSession()).willReturn(session);		
-		given(session.beginTransaction()).willReturn(transaction);
 
 		OgmSessionRepository.OgmSession session = this.repository
 				.createSession();
@@ -272,8 +272,6 @@ public class OgmSessionRepositoryTests {
 
 	@Test
 	public void saveNewWithAttributes() {		
-		given(this.sessionFactory.openSession()).willReturn(session);		
-		given(session.beginTransaction()).willReturn(transaction);
 		
 		OgmSessionRepository.OgmSession session = this.repository
 				.createSession();
@@ -295,10 +293,6 @@ public class OgmSessionRepositoryTests {
 
 	@Test
 	public void saveUpdatedAttributes() {
-		
-		given(this.sessionFactory.openSession()).willReturn(session);		
-		given(session.beginTransaction()).willReturn(transaction);
-		
 		List<Map<String, Object>> r = new ArrayList<>();
 		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
 		Result result = new QueryResultModel(r, queryStatisticsModel);
@@ -336,10 +330,6 @@ public class OgmSessionRepositoryTests {
 
 	@Test
 	public void saveUpdatedLastAccessedTime() {
-		
-		given(this.sessionFactory.openSession()).willReturn(session);		
-		given(session.beginTransaction()).willReturn(transaction);
-		
 		OgmSessionRepository.OgmSession session = this.repository
 				.createSession();
 		session.setLastAccessedTime(Instant.now());
@@ -373,10 +363,6 @@ public class OgmSessionRepositoryTests {
 	// TODO: Should saving an unchanged Session update the last access time? I think so
 	@Test
 	public void saveUnchanged() {
-		
-		given(this.sessionFactory.openSession()).willReturn(session);		
-		given(session.beginTransaction()).willReturn(transaction);
-		
 		OgmSessionRepository.OgmSession session = this.repository
 				.createSession();
 
@@ -412,9 +398,6 @@ public class OgmSessionRepositoryTests {
 
 		String sessionId = "testSessionId";
 
-		given(this.sessionFactory.openSession()).willReturn(session);		
-		given(session.beginTransaction()).willReturn(transaction);
-		
 		List<Map<String, Object>> r = new ArrayList<>();
 		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
 		Result result = new QueryResultModel(r, queryStatisticsModel);
@@ -434,10 +417,6 @@ public class OgmSessionRepositoryTests {
 
 	@Test
 	public void getSessionFound() {
-		
-		given(this.sessionFactory.openSession()).willReturn(session);		
-		given(session.beginTransaction()).willReturn(transaction);
-		
 		List<Map<String, Object>> r = new ArrayList<>();
 		String attributeName = "name";
 		String attributeValue = "Elizabeth";
@@ -489,13 +468,11 @@ public class OgmSessionRepositoryTests {
 		Instant b = Instant.now().minusSeconds(a);		
 		expired.setLastAccessedTime(b);
 		long c = b.toEpochMilli();
-		
-		given(this.sessionFactory.openSession()).willReturn(session);		
-		given(session.beginTransaction()).willReturn(transaction);
 
 		NodeModel nodeModel = new NodeModel();
 		Map<String, Object> properties = new HashMap<>();
 		long now = new Date().getTime();
+		
 		properties.put(OgmSessionRepository.CREATION_TIME, 0L);
 		properties.put(OgmSessionRepository.LAST_ACCESS_TIME, 100L);
 		properties.put(OgmSessionRepository.MAX_INACTIVE_INTERVAL, 1);		
@@ -527,10 +504,6 @@ public class OgmSessionRepositoryTests {
 
 	@Test
 	public void delete() {
-		
-		given(this.sessionFactory.openSession()).willReturn(session);		
-		given(session.beginTransaction()).willReturn(transaction);
-
 		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
 		queryStatisticsModel.setNodes_deleted(1);
 		List<Map<String, Object>> r = new ArrayList<>();
@@ -560,10 +533,6 @@ public class OgmSessionRepositoryTests {
 
 	@Test
 	public void findByIndexNameAndIndexValuePrincipalIndexNameNotFound() {
-		
-		given(this.sessionFactory.openSession()).willReturn(session);		
-		given(session.beginTransaction()).willReturn(transaction);
-		
 		List<Map<String, Object>> r = new ArrayList<>();
 		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
 		Result result = new QueryResultModel(r, queryStatisticsModel);
@@ -602,9 +571,6 @@ public class OgmSessionRepositoryTests {
 		MapSession saved2 = new MapSession();
 		saved2.setAttribute(SPRING_SECURITY_CONTEXT, authentication);
 		saved.add(saved2);
-
-		given(this.sessionFactory.openSession()).willReturn(session);		
-		given(session.beginTransaction()).willReturn(transaction);
 
 		Map<String, Object> data1 = new HashMap<>();
 		NodeModel nodeModel = new NodeModel();
@@ -652,10 +618,6 @@ public class OgmSessionRepositoryTests {
 
 	@Test
 	public void cleanupExpiredSessions() {
-
-		given(this.sessionFactory.openSession()).willReturn(session);		
-		given(session.beginTransaction()).willReturn(transaction);
-
 		QueryStatisticsModel queryStatisticsModel = new QueryStatisticsModel();
 		queryStatisticsModel.setNodes_deleted(1);
 		List<Map<String, Object>> r = new ArrayList<>();
