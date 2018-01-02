@@ -380,6 +380,9 @@ public class OgmSessionRepositoryTests {
 		OgmSessionRepository.OgmSession session = this.repository
 				.createSession();
 
+		assertThat(session).isNotNull();
+		assertThat(session.isNew()).isTrue();
+		
 		this.repository.save(session);
 
 		assertThat(session).isNotNull();
@@ -388,13 +391,20 @@ public class OgmSessionRepositoryTests {
 		verifyCounts(1);
 		verifyNoMoreInteractions(this.sessionFactory);
 		
+		String expectedQuery = OgmSessionRepository.CREATE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
+		expectedQuery = expectedQuery.replaceAll("%PROPERTIES_TO_UPDATE%", "n.lastAccessedTime={lastAccessedTime},n.attribute_testName={attribute_testName},n.principalName={principalName},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval}");
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
+		
 		this.repository.save(session);
 		
 		assertThat(session.isNew()).isFalse();
 		verifyCounts(2);
+		verifyZeroInteractions(this.sessionFactory);
 		verifyNoMoreInteractions(this.sessionFactory);
 		
-		verifyZeroInteractions(this.sessionFactory);
+		expectedQuery = OgmSessionRepository.UPDATE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
+		expectedQuery = expectedQuery.replaceAll("%PROPERTIES_TO_UPDATE%", "n.lastAccessedTime={lastAccessedTime},n.principalName={principalName},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval}");
+		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
 	}
 
 	@Test
