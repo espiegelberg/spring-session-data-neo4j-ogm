@@ -595,10 +595,6 @@ public class OgmSessionRepositoryTests {
 		MapSession saved2 = new MapSession();
 		saved2.setAttribute(SPRING_SECURITY_CONTEXT, authentication);
 		saved.add(saved2);
-		
-//		given(this.sessionFactory.query(isA(String.class),
-//				isA(PreparedStatementSetter.class), isA(ResultSetExtractor.class)))
-//				.willReturn(saved);
 
 		given(this.sessionFactory.openSession()).willReturn(session);		
 		given(session.beginTransaction()).willReturn(transaction);
@@ -625,7 +621,6 @@ public class OgmSessionRepositoryTests {
 		nodeModel2.setProperties(properties2);		
 		data2.put("n", nodeModel2);
 
-		//erics
 		List<Map<String, Object>> r = new ArrayList<>();
 		r.add(data1);
 		r.add(data2);
