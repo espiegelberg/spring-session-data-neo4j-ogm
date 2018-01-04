@@ -39,6 +39,11 @@ import org.springframework.session.data.neo4j.OgmSessionRepository;
  * &#064;EnableJdbcHttpSession
  * public class OgmHttpSessionConfig {
  *
+ *		@Value("${spring.data.neo4j.uri:bolt://neo4j:dev@localhost}")
+ *		protected String neo4jUri;
+ *
+ *		protected Configuration configuration;
+ *
  *		&#064;Bean
  *		public Configuration configureOgm() {
  *			Configuration configuration = new Configuration.Builder().uri(neo4jUri).build();
