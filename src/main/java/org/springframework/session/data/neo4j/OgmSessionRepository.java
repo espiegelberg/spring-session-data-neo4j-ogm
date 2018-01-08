@@ -254,6 +254,9 @@ public class OgmSessionRepository implements
 						value = serialize(value);					
 					}
 					
+					key = processAttributeName(key, true);
+					value = processAttributeValue(value, true);
+					
 					nodeProperties.put(key, value);
 
 				}
@@ -276,7 +279,11 @@ public class OgmSessionRepository implements
 					value = serialize(value);					
 				}
 
+				key = processAttributeName(key, true);
+				value = processAttributeValue(value, true);
+				
 				nodeProperties.put(key, value);
+
 			}
 
 			String suffix = buildQuerySuffix(nodeProperties);
@@ -334,6 +341,9 @@ public class OgmSessionRepository implements
 							byte bytes[] = (byte[]) value;
 							value = deserialize(bytes);							
 						}
+
+						attributeName = processAttributeName(attributeName, false);
+						value = processAttributeValue(value, false);
 
 						session.setAttribute(attributeName, value);
 						
@@ -671,4 +681,30 @@ public class OgmSessionRepository implements
 		
 	}
 
+	/**
+	 * Allow subclasses an opportunity to manipulate the session attribute property's name before it is persisted to or after being read from the database. 
+	 * This maybe useful in use cases such as high security environments where the application wishes to encrypt the property's name before it is persisted.
+	 *  
+	 * @param attributeName The name of the session attribute.
+	 * @param beforeWrite boolean true indicating that this method is being invoked just before the attribute's name and value are written to the database 
+	 * or boolean false indicating this method is being invoked just after the attribute's name and value have been read from the database.
+	 * @return
+	 */
+	protected String processAttributeName(String attributeName, boolean beforeWrite) {
+		return attributeName;
+	}
+	
+	/**
+	 * Allow subclasses an opportunity to manipulate the session attribute property's value before it is persisted to or after  read from the database.
+	 * This maybe useful in use cases such as high security environments where the application wishes to encrypt the property's value before it is persisted.
+ 	 *
+	 * @param attributeName The name of the session attribute.
+	 * @param beforeWrite boolean true indicating that this method is being invoked just before the attribute's name and value are being written to the database 
+	 * or boolean false indicating this method is being invoked just after the attribute's name and value have been read from the database.
+	 * @return
+	 */
+	protected Object processAttributeValue(Object attributeValue, boolean beforeWrite) {
+		return attributeValue;
+	}
+	
 }
