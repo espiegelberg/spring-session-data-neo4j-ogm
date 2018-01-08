@@ -323,7 +323,7 @@ public class OgmSessionRepositoryTests {
 		verifyNoMoreInteractions(this.sessionFactory);
 
 		expectedQuery = OgmSessionRepository.UPDATE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
-		expectedQuery = expectedQuery.replaceAll("%PROPERTIES_TO_UPDATE%", "n.lastAccessedTime={lastAccessedTime},n.attribute_testName={attribute_testName},n.principalName={principalName},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval}");
+		expectedQuery = expectedQuery.replaceAll("%PROPERTIES_TO_UPDATE%", "n.lastAccessedTime={lastAccessedTime},n.attribute_testName={attribute_testName},n.maxInactiveInterval={maxInactiveInterval},n.principalName={principalName},n.sessionId={sessionId}");
 		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
 
 	}
@@ -355,7 +355,7 @@ public class OgmSessionRepositoryTests {
 		verifyNoMoreInteractions(this.sessionFactory);
 
 		expectedQuery = OgmSessionRepository.UPDATE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
-		expectedQuery = expectedQuery.replaceAll("%PROPERTIES_TO_UPDATE%", "n.lastAccessedTime={lastAccessedTime},n.principalName={principalName},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval},n.attribute_updated={attribute_updated}");
+		expectedQuery = expectedQuery.replaceAll("%PROPERTIES_TO_UPDATE%", "n.lastAccessedTime={lastAccessedTime},n.maxInactiveInterval={maxInactiveInterval},n.principalName={principalName},n.sessionId={sessionId},n.attribute_updated={attribute_updated}");
 		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
 		
 	}
@@ -389,7 +389,7 @@ public class OgmSessionRepositoryTests {
 		verifyNoMoreInteractions(this.sessionFactory);
 		
 		expectedQuery = OgmSessionRepository.UPDATE_SESSION_QUERY.replace("%LABEL%", OgmSessionRepository.DEFAULT_LABEL);
-		expectedQuery = expectedQuery.replaceAll("%PROPERTIES_TO_UPDATE%", "n.lastAccessedTime={lastAccessedTime},n.principalName={principalName},n.sessionId={sessionId},n.maxInactiveInterval={maxInactiveInterval}");
+		expectedQuery = expectedQuery.replaceAll("%PROPERTIES_TO_UPDATE%", "n.lastAccessedTime={lastAccessedTime},n.maxInactiveInterval={maxInactiveInterval},n.principalName={principalName},n.sessionId={sessionId}");
 		verify(this.session, times(1)).query(eq(expectedQuery), isA(Map.class));
 	}
 
