@@ -354,27 +354,16 @@ public class OgmSessionRepository implements
 					String attributeName = property.getKey();
 					if (attributeName.startsWith(ATTRIBUTE_KEY_PREFIX)) { // Strip the ATTRIBUTE_KEY_PREFIX
 						attributeName = attributeName.substring(10);
-//						byte bytes[] = (byte[]) property.getValue();
-//// TODO performance: Deserialize the attributeValue only if it is not a native Neo4j type?
-//						Object attributeValue = deserialize(bytes);
-//						session.setAttribute(attributeName, attributeValue);
-						
 						Object value = property.getValue();
 						
-						boolean isNonByteArrayNeo4jSupportedType = isNonByteArrayNeo4jSupportedType(value);
-						
-						if (isNonByteArrayNeo4jSupportedType) {
-
-							parameters.put(attributeName, value);
-							
-						} else {
-						
-							byte bytes[] = (byte[]) property.getValue();
-							Object attributeValue = deserialize(bytes);
-							session.setAttribute(attributeName, attributeValue);
-
+						boolean isNonByteArrayNeo4jSupportedType = isNonByteArrayNeo4jSupportedType(value);						
+						if (!isNonByteArrayNeo4jSupportedType) {
+							byte bytes[] = (byte[]) value;
+							value = deserialize(bytes);							
 						}
 
+						session.setAttribute(attributeName, value);
+						
 					}				
 				}
 			
