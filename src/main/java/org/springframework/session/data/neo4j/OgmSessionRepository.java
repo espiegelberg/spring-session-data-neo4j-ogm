@@ -47,6 +47,7 @@ import org.springframework.session.FindByIndexNameSessionRepository;
 import org.springframework.session.MapSession;
 import org.springframework.session.Session;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -244,11 +245,17 @@ public class OgmSessionRepository implements
 				Optional<Object> attributeValue = session.getAttribute(attributeName);
 
 				if (attributeValue.isPresent()) {
-// TODO performance: Serialize the attributeValue only if it is not a native Neo4j type?
+
 					String key = ATTRIBUTE_KEY_PREFIX + attributeName;
 					Object value = attributeValue.get();
-					byte attributeValueAsBytes[] = serialize(value);
-					nodeProperties.put(key, attributeValueAsBytes);
+					
+					boolean isNonByteArrayNeo4jSupportedType = isNonByteArrayNeo4jSupportedType(value);					
+					if (!isNonByteArrayNeo4jSupportedType) {
+						value = serialize(value);					
+					}
+					
+					nodeProperties.put(key, value);
+
 				}
 
 			}
@@ -267,11 +274,16 @@ public class OgmSessionRepository implements
 	
 			if (!delta.isEmpty()) {		
 				for (final Map.Entry<String, Object> entry : delta.entrySet()) {
-// TODO performance: Serialize the attributeValue only if it is not a native Neo4j type?
+
 					String key = ATTRIBUTE_KEY_PREFIX + entry.getKey();
 					Object value = entry.getValue();
-					byte attributeValueAsBytes[] = serialize(value);
-					parameters.put(key, attributeValueAsBytes);
+
+					boolean isNonByteArrayNeo4jSupportedType = isNonByteArrayNeo4jSupportedType(value);					
+					if (!isNonByteArrayNeo4jSupportedType) {
+						value = serialize(value);					
+					}
+
+					parameters.put(key, value);
 				}
 
 			}
@@ -281,7 +293,6 @@ public class OgmSessionRepository implements
 			while (entries.hasNext()) {
 				Entry<String, Object> entry = entries.next();
 				String key = entry.getKey();
-				//Object value = entry.getValue();
 
 				stringBuilder.append("n.");
 				stringBuilder.append(key);
@@ -343,10 +354,27 @@ public class OgmSessionRepository implements
 					String attributeName = property.getKey();
 					if (attributeName.startsWith(ATTRIBUTE_KEY_PREFIX)) { // Strip the ATTRIBUTE_KEY_PREFIX
 						attributeName = attributeName.substring(10);
-						byte bytes[] = (byte[]) property.getValue();
-// TODO performance: Deserialize the attributeValue only if it is not a native Neo4j type?
-						Object attributeValue = deserialize(bytes);
-						session.setAttribute(attributeName, attributeValue);
+//						byte bytes[] = (byte[]) property.getValue();
+//// TODO performance: Deserialize the attributeValue only if it is not a native Neo4j type?
+//						Object attributeValue = deserialize(bytes);
+//						session.setAttribute(attributeName, attributeValue);
+						
+						Object value = property.getValue();
+						
+						boolean isNonByteArrayNeo4jSupportedType = isNonByteArrayNeo4jSupportedType(value);
+						
+						if (isNonByteArrayNeo4jSupportedType) {
+
+							parameters.put(attributeName, value);
+							
+						} else {
+						
+							byte bytes[] = (byte[]) property.getValue();
+							Object attributeValue = deserialize(bytes);
+							session.setAttribute(attributeName, attributeValue);
+
+						}
+
 					}				
 				}
 			
@@ -421,7 +449,7 @@ public class OgmSessionRepository implements
 		return sessionMap;
 	}
 
-	@Scheduled(cron = "${spring.session.cleanup.cron.expression:0 * * * * *}")
+	@Scheduled(cron = "${spring.session.cleanup.cron.expression:0 1 * * * *}")
 	public void cleanUpExpiredSessions() {
 
 		Date now = new Date();
@@ -618,6 +646,41 @@ public class OgmSessionRepository implements
 		} finally {
 			transaction.close();
 		}
+		
+	}
+
+	/**
+	 * Neo4j natively supports values of either Java primitive types (float, double, int, boolean, byte,... ), Strings or an array of both.
+	 * 
+	 * Allowing byte arrays, which *are* supported by Neo4j, is problematic. This is due to then not knowing if the value is actually a byte array 
+	 * or a value serialized to byte array form. For now then, byte arrays are not supported by the this class and instead are serialized.
+	 * 
+	 * @param o The object to evaluate.
+	 * @return boolean true if the object is a Neo4j supported data type otherwise false.
+	 */
+	protected boolean isNonByteArrayNeo4jSupportedType(Object o) {
+	
+		Class<?> clazz = o.getClass();
+		boolean supported = ClassUtils.isPrimitiveOrWrapper(clazz);
+		
+		if (!supported) {
+			supported = ClassUtils.isPrimitiveWrapperArray(clazz);	
+		}
+
+		if (!supported) {
+			supported = o instanceof String;	
+		}
+		
+		if (!supported) {
+			supported = o instanceof String[];	
+		}
+
+		// Byte arrays are not currently supported because it is then unknown as to if it in fact a byte array or a serialized value		
+//		if (!supported) {
+//			supported = o instanceof byte[];			
+//		}
+
+		return supported;
 		
 	}
 	
