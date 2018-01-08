@@ -226,19 +226,19 @@ public class OgmSessionRepository implements
 	}
 	
 	public void save(final OgmSession session) {
+		
+		Map<String, Object> nodeProperties = new HashMap<>();
+		nodeProperties.put(SESSION_ID, session.getId());		
+		nodeProperties.put(PRINCIPAL_NAME, session.getPrincipalName());
+		nodeProperties.put(LAST_ACCESS_TIME, session.getLastAccessedTime().toEpochMilli());
+		nodeProperties.put(MAX_INACTIVE_INTERVAL, session.getMaxInactiveInterval().toMillis());
+		
 		if (session.isNew()) {
 
-			Map<String, Object> parameters = new HashMap<>(1);
-			
-			int size = session.getAttributeNames().size() + 5;			
-			Map<String, Object> nodeProperties = new HashMap<>(size);			
+			Map<String, Object> parameters = new HashMap<>(1);			
 			parameters.put(NODE_PROPERTEIS, nodeProperties);
-
-			nodeProperties.put(SESSION_ID, session.getId());
+			
 			nodeProperties.put(CREATION_TIME, session.getCreationTime().toEpochMilli());
-			nodeProperties.put(PRINCIPAL_NAME, session.getPrincipalName());
-			nodeProperties.put(LAST_ACCESS_TIME, session.getLastAccessedTime().toEpochMilli());
-			nodeProperties.put(MAX_INACTIVE_INTERVAL, session.getMaxInactiveInterval().toMillis());
 			
 			for (String attributeName : session.getAttributeNames()) {
 				
@@ -249,8 +249,8 @@ public class OgmSessionRepository implements
 					String key = ATTRIBUTE_KEY_PREFIX + attributeName;
 					Object value = attributeValue.get();
 					
-					boolean isNonByteArrayNeo4jSupportedType = isNonByteArrayNeo4jSupportedType(value);					
-					if (!isNonByteArrayNeo4jSupportedType) {
+					boolean requiresSerialization = requiresSerialization(value);					
+					if (requiresSerialization) {
 						value = serialize(value);					
 					}
 					
@@ -265,51 +265,24 @@ public class OgmSessionRepository implements
 		} else {
 
 			Map<String, Object> delta = session.getDelta();
-			
-			Map<String, Object> parameters = new HashMap<>(4 + delta.size());
-			parameters.put(SESSION_ID, session.getId());			
-			parameters.put(PRINCIPAL_NAME, session.getPrincipalName());
-			parameters.put(LAST_ACCESS_TIME, session.getLastAccessedTime().toEpochMilli());
-			parameters.put(MAX_INACTIVE_INTERVAL, session.getMaxInactiveInterval().toMillis());
-	
-			if (!delta.isEmpty()) {		
-				for (final Map.Entry<String, Object> entry : delta.entrySet()) {
 
-					String key = ATTRIBUTE_KEY_PREFIX + entry.getKey();
-					Object value = entry.getValue();
+			for (final Map.Entry<String, Object> entry : delta.entrySet()) {
 
-					boolean isNonByteArrayNeo4jSupportedType = isNonByteArrayNeo4jSupportedType(value);					
-					if (!isNonByteArrayNeo4jSupportedType) {
-						value = serialize(value);					
-					}
+				String key = ATTRIBUTE_KEY_PREFIX + entry.getKey();
+				Object value = entry.getValue();
 
-					parameters.put(key, value);
+				boolean requiresSerialization = requiresSerialization(value);					
+				if (requiresSerialization) {
+					value = serialize(value);					
 				}
 
+				nodeProperties.put(key, value);
 			}
 
-			StringBuilder stringBuilder = new StringBuilder();			
-			Iterator<Entry<String, Object>> entries = parameters.entrySet().iterator();
-			while (entries.hasNext()) {
-				Entry<String, Object> entry = entries.next();
-				String key = entry.getKey();
-
-				stringBuilder.append("n.");
-				stringBuilder.append(key);
-				stringBuilder.append("={");					
-				stringBuilder.append(key);
-				stringBuilder.append("}");
-				if (entries.hasNext()) {
-					stringBuilder.append(",");
-				}
-
-			}
-
-			String suffix = stringBuilder.toString();
-
+			String suffix = buildQuerySuffix(nodeProperties);
 			String updateSessionCypher = updateSessionQuery.replace("%PROPERTIES_TO_UPDATE%", suffix);
 
-			executeCypher(updateSessionCypher, parameters);
+			executeCypher(updateSessionCypher, nodeProperties);
 		}
 
 		session.clearChangeFlags();
@@ -356,8 +329,8 @@ public class OgmSessionRepository implements
 						attributeName = attributeName.substring(10);
 						Object value = property.getValue();
 						
-						boolean isNonByteArrayNeo4jSupportedType = isNonByteArrayNeo4jSupportedType(value);						
-						if (!isNonByteArrayNeo4jSupportedType) {
+						boolean requiresSerialization = requiresSerialization(value);						
+						if (requiresSerialization) {
 							byte bytes[] = (byte[]) value;
 							value = deserialize(bytes);							
 						}
@@ -647,7 +620,7 @@ public class OgmSessionRepository implements
 	 * @param o The object to evaluate.
 	 * @return boolean true if the object is a Neo4j supported data type otherwise false.
 	 */
-	protected boolean isNonByteArrayNeo4jSupportedType(Object o) {
+	protected boolean requiresSerialization(Object o) {
 	
 		Class<?> clazz = o.getClass();
 		boolean supported = ClassUtils.isPrimitiveOrWrapper(clazz);
@@ -669,8 +642,33 @@ public class OgmSessionRepository implements
 //			supported = o instanceof byte[];			
 //		}
 
-		return supported;
+		return !supported;
 		
 	}
-	
+
+	protected String buildQuerySuffix(Map<String, Object> parameters) {
+		
+		StringBuilder stringBuilder = new StringBuilder();			
+		Iterator<Entry<String, Object>> entries = parameters.entrySet().iterator();
+		while (entries.hasNext()) {
+			Entry<String, Object> entry = entries.next();
+			String key = entry.getKey();
+
+			stringBuilder.append("n.");
+			stringBuilder.append(key);
+			stringBuilder.append("={");					
+			stringBuilder.append(key);
+			stringBuilder.append("}");
+			if (entries.hasNext()) {
+				stringBuilder.append(",");
+			}
+
+		}
+
+		String suffix = stringBuilder.toString();
+		
+		return suffix;
+		
+	}
+
 }
