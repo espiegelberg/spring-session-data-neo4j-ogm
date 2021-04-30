@@ -84,7 +84,7 @@
 		<junit.version>[4.13,)</junit.version>
 		<mockito.version>2.10.0</mockito.version>
 		<neo4j.ogm.version>3.0.2</neo4j.ogm.version>
-		<spring.version>5.0.2.RELEASE</spring.version>
+		<spring.version>5.3.6</spring.version>
 		<spring-data.version>Kay-SR2</spring-data.version>
 		<spring-security.version>5.0.0.RELEASE</spring-security.version>
 		<spring-session.version>2.0.0.BUILD-SNAPSHOT</spring-session.version>
